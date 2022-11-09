@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>ru.citeck.ecos.webapp</groupId>
+        <artifactId>ecos-webapp-spring-simple-parent</artifactId>
+        <version>2.0.0</version>
+    </parent>
+
+    <repositories>
+        <repository>
+            <id>citeck-public</id>
+            <url>https://nexus.citeck.ru/repository/maven-public</url>
+        </repository>
+    </repositories>
+    <groupId>ru.citeck.ecos</groupId>
+    <artifactId>ecom</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>ecom</name>
+    <description>ECommunications</description>
+    <properties>
+        <java.version>11</java.version>
+        <camel-core.version>3.12.0</camel-core.version>
+        <camel-telegram.version>3.12.0</camel-telegram.version>
+        <jsoup.version>1.15.3</jsoup.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-core</artifactId>
+            <version>${camel-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-spring-boot-starter</artifactId>
+            <version>${camel-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-spring</artifactId>
+            <version>${camel-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-telegram</artifactId>
+            <version>${camel-telegram.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambots</artifactId>
+            <version>3.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-mail-starter</artifactId>
+            <version>${camel-core.version}</version>
+            <!-- use the same version as your Camel core version -->
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-telegram-starter</artifactId>
+            <version>${camel-telegram.version}</version>
+            <!-- use the same version as your Camel core version -->
+        </dependency>
+        <dependency>
+            <!-- jsoup HTML parser library @ https://jsoup.org/ -->
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${jsoup.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>xerces</groupId>
+            <artifactId>xercesImpl</artifactId>
+            <version>2.9.1</version>
+        </dependency>
+    </dependencies>
+
+</project>
