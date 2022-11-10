@@ -1,6 +1,10 @@
-pipeline{
- agent any
- tools{
-     jdk 'JDK11'
- }}
-ecosBuild()
+node {
+  jdk = tool name: 'JDK11'
+  env.JAVA_HOME = "${jdk}"
+
+  echo "jdk installation path is: ${jdk}"
+
+  sh "${jdk}/bin/java -version"
+
+  ecosBuild()
+}
