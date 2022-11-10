@@ -23,7 +23,7 @@
     <properties>
         <java.version>11</java.version>
         <camel-core.version>3.12.0</camel-core.version>
-        <camel-telegram.version>3.12.0</camel-telegram.version>
+        <camel-telegram.version>3.12.13</camel-telegram.version>
         <jsoup.version>1.15.3</jsoup.version>
     </properties>
     <dependencies>
@@ -43,7 +43,7 @@
             <version>${camel-core.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.camel</groupId>
+            <groupId>org.apache.camel.components</groupId>
             <artifactId>camel-telegram</artifactId>
             <version>${camel-telegram.version}</version>
         </dependency>
