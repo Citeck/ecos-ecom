@@ -16,9 +16,9 @@
         </repository>
     </repositories>
     <groupId>ru.citeck.ecos</groupId>
-    <artifactId>ecom</artifactId>
+    <artifactId>ecos-ecom</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>ecom</name>
+    <name>ECommunications</name>
     <description>ECommunications</description>
     <properties>
         <java.version>11</java.version>
