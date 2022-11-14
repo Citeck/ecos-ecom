@@ -9,26 +9,3 @@
 # Full reference is available at:
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
-
-logging:
-  level:
-    ROOT: DEBUG
-    io.github.jhipster: DEBUG
-    ru.citeck.ecos.ecom: DEBUG
-
-spring:
-  profiles:
-    active: dev
-    include:
-      - swagger
-      # Uncomment to activate TLS for the dev profile
-      #- tls
-  devtools:
-    restart:
-      enabled: true
-    livereload:
-      enabled: false # we use Webpack dev server + BrowserSync for livereload
-  jackson:
-    serialization:
-      indent-output: true
-

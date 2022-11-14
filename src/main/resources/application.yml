@@ -1,6 +1,5 @@
 # the name of Camel
-camel.springboot.name = ECommunications
-spring.application.name = ECommunications
+camel.springboot.name: ECommunications
 #spring.config.use-legacy-processing = true
 
 # expose actuator endpoint via HTTP
@@ -8,4 +7,3 @@ spring.application.name = ECommunications
 
 # show verbose health details (/actuator/health) so you can see Camel information also
 #management.endpoint.health.show-details=always
-

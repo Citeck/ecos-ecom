@@ -1,5 +1,4 @@
 ---
 type: 'maven-webapp'
 properties:
-  image:
-    baseImage: 'openjdk:11-oraclelinux8'
+  jdk: JDK17
