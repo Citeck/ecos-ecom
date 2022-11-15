@@ -43,7 +43,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.components</groupId>
-            <artifactId>camel-telegram</artifactId>
+            <artifactId>ecos-camel-telegram</artifactId>
             <version>${camel-telegram.version}</version>
         </dependency>
         <dependency>
@@ -57,11 +57,6 @@
             <version>${camel-core.version}</version>
             <!-- use the same version as your Camel core version -->
         </dependency>
-        <!-- <dependency>
-             <groupId>org.apache.camel.springboot</groupId>
-             <artifactId>camel-telegram-starter</artifactId>
-             <version>${camel-telegram.version}</version>
-        </dependency> -->
         <dependency>
             <!-- jsoup HTML parser library @ https://jsoup.org/ -->
             <groupId>org.jsoup</groupId>
