@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 import ru.citeck.ecos.config.lib.consumer.bean.EcosConfig;
 import ru.citeck.ecos.ecom.processor.OrderPassProcessor;
 
+import java.util.Objects;
+
 @Component
 public class OrderPassRoute extends RouteBuilder {
 
@@ -20,6 +22,7 @@ public class OrderPassRoute extends RouteBuilder {
     @Override
     public void configure() {
         from("telegram:bots?authorizationToken="+telegramAuthorizationToken)
+                .autoStartup(!Objects.equals(telegramAuthorizationToken, "disabled"))
                 .to("log:INFO?showHeaders=true")
                 .process(orderPassProcessor)
                 .to("telegram:bots?authorizationToken="+telegramAuthorizationToken);

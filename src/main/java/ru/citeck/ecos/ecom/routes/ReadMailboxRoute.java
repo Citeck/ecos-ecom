@@ -7,6 +7,8 @@ import ru.citeck.ecos.config.lib.consumer.bean.EcosConfig;
 import ru.citeck.ecos.ecom.processor.OrderPassProcessor;
 import ru.citeck.ecos.ecom.processor.ReadMailboxProcessor;
 
+import java.util.Objects;
+
 @Component
 public class ReadMailboxRoute extends RouteBuilder {
 
@@ -21,6 +23,7 @@ public class ReadMailboxRoute extends RouteBuilder {
     @Override
     public void configure() {
         from("imap://" + imap)
+                .autoStartup(!Objects.equals(imap, "disabled"))
                 .to("log:INFO?showHeaders=true")
                 .process(readMailboxProcessor)
                 .choice()

@@ -9,6 +9,7 @@ mail:
       demo: "Заказать демонстрацию"
       community: "Скачивание Citeck ECOS Community"
       price: "Запрос стоимости"
+      cloud: "Заявка на демо-доступ к Citeck ECOS в облаке"
     pattern:
       from: "(?m)(?<=От:).*$"
       company: "(?m)(?<=Компания:).*$"

@@ -4,20 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.Exchange;
 import org.apache.camel.Message;
 import org.apache.camel.Processor;
-import org.apache.camel.component.mail.MailConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import ru.citeck.ecos.ecom.dto.MailDTO;
 
 import javax.mail.internet.MimeUtility;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.util.regex.Pattern;
 
 @PropertySource(ignoreResourceNotFound = true, value = "classpath:application.yml")
 @Slf4j
@@ -30,9 +25,10 @@ public class ReadMailboxProcessor implements Processor {
     private String dealSubjectDemo;
     @Value("${mail.deal.subject.community}")
     private String dealSubjectCommunity;
-
     @Value("${mail.deal.subject.price}")
     private String dealSubjectPrice;
+    @Value("${mail.deal.subject.cloud}")
+    private String dealSubjectCloud;
 
     @Override
     public void process(Exchange exchange) throws Exception {
@@ -63,6 +59,8 @@ public class ReadMailboxProcessor implements Processor {
             mail.setKind("price");
         else if (mail.getSubject().contains(dealSubjectDemo))
             mail.setKind("demo");
+        else if (mail.getSubject().contains(dealSubjectCloud))
+            mail.setKind("cloud");
         else {
             mail.setKind("other");
             exchange.setProperty("subject", "other");

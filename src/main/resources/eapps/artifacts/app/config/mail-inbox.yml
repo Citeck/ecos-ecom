@@ -3,4 +3,4 @@ id: mail-inbox
 name:
   ru: Конфигурация почтового ящика IMAP для чтения писем в Camel route
   en: Main inbox IMAP configuration for Camel route
-value: host?username=username&password=password&delete=false&unseen=false&delay=30000
+value: disabled
