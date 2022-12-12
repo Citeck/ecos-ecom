@@ -13,7 +13,7 @@ public class OrderPassRoute extends RouteBuilder {
 
     static final String ROUTE_ID = "orderPassRoute";
 
-    @EcosConfig("telegram-authtoken")
+    @EcosConfig("telegram-oap-authtoken")
     private String telegramAuthorizationToken;
 
     @Autowired

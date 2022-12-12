@@ -49,9 +49,6 @@ public class EcosOrderPassProvider {
 
     @PostConstruct
     public void init() {
-
-        //eventsService.addListener(new ListenerConfig<>("id", "record-status-changed", StatusChanged.class, record, false, event->eventAction(event), Predicates.empty(""), true));
-
         eventsService.addListener(ListenerConfig.<StatusChanged>create()
                 .withEventType(RecordStatusChangedEvent.TYPE)
                 .withDataClass(StatusChanged.class)
@@ -59,18 +56,6 @@ public class EcosOrderPassProvider {
                 .withFilter(Predicates.and(Predicates.contains("after{name?json,id:?localId}", "passConfirmed"), Predicates.contains("record?id", sourceId)))
                 .build()
         );
-
-        //record["docStatusTitle"] = event.after.name.getClosest(RU_LOCALE)
-        //record["eventType"] = "status.changed"
-        //record["userId"] = event.user
-        //record["username"] = event.user
-        //record["creationTime"] = formatTime(event.time)
-        //record["comments"] =
-        //        "${buildStatusMsg(event.before)} -> ${buildStatusMsg(event.after)}"
-        //.withEventType(RecordStatusChangedEvent.TYPE)
-        //    withDataClass(StatusChanged.class)
-        //    withAction { event ->
-        //historyRecordService.saveOrUpdateRecord(HistoryRecordEntity(), record)
     }
 
     void onEvent(StatusChanged event){

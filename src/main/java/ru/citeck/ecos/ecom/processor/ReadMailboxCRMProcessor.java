@@ -17,7 +17,7 @@ import java.io.UnsupportedEncodingException;
 @PropertySource(ignoreResourceNotFound = true, value = "classpath:application.yml")
 @Slf4j
 @Component
-public class ReadMailboxProcessor implements Processor {
+public class ReadMailboxCRMProcessor implements Processor {
 
     @Value("${mail.deal.subject.consult}")
     private String dealSubjectConsult;

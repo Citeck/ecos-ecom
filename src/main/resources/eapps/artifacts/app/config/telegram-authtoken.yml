@@ -1,6 +1,0 @@
----
-id: telegram-authtoken
-name:
-  ru: Авторизационный токен для Телеграм бота
-  en: Telegram bot authorization token
-value: disabled

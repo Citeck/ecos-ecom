@@ -11,7 +11,7 @@ public class NotifyOrderPassRoute extends RouteBuilder {
 
     static final String ROUTE_ID = "notifyOrderPassRoute";
 
-    @EcosConfig("telegram-authtoken")
+    @EcosConfig("telegram-oap-authtoken")
     private String telegramAuthorizationToken;
 
     @Override

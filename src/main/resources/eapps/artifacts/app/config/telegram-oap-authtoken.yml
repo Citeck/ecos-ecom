@@ -1,0 +1,6 @@
+---
+id: telegram-oap-authtoken
+name:
+  ru: Авторизационный токен для Телеграм бота OaP
+  en: Telegram OaP bot authorization token
+value: disabled

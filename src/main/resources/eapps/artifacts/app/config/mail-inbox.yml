@@ -1,6 +1,0 @@
----
-id: mail-inbox
-name:
-  ru: Конфигурация почтового ящика IMAP для чтения писем в Camel route
-  en: Main inbox IMAP configuration for Camel route
-value: disabled

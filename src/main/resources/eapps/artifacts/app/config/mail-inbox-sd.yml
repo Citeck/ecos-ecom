@@ -1,0 +1,6 @@
+---
+id: mail-inbox-sd
+name:
+  ru: Конфигурация почтового ящика IMAP для чтения писем в SD Camel route
+  en: Main inbox IMAP configuration for SD Camel route
+value: disabled

@@ -141,6 +141,7 @@ public class RecordsDaoEndpoint {
         );
         RecordRef ref = RecordRef.create(appName, sourceId, "");
         RecordAtts recordAtts = new RecordAtts(ref, targetAttributesData);
+        log.debug("Record atts to mutate {}", recordAtts);
         try {
             RecordRef resultRef = AuthContext.runAsSystemJ(() -> {
                     return recordsService.mutate(recordAtts);
