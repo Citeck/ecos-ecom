@@ -86,13 +86,15 @@ public class ReadMailboxSDProcessor implements Processor {
 
         if (client != null) {
             exchange.getIn().setHeader("client", client.toString());
-            Map bodyMap = mail.toMap();
+            Map<String, String> bodyMap = mail.toMap();
             bodyMap.put("client", client.toString());
 
             RecordRef initiator = getUserByEmail(fromAddress);
             if (initiator != null) {
                 bodyMap.put("initiator", initiator.toString());
             }
+
+            bodyMap.put("createdAutomatically", "true");
 
             exchange.getIn().setBody(bodyMap);
         }

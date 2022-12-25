@@ -32,6 +32,7 @@ public class CreateSDRoute extends RouteBuilder {
         map.put("content", "letterContent");
         map.put("client", "client");
         map.put("initiator", "initiator");
+        map.put("createdAutomatically", "createdAutomatically");
         //map.put("status", "_status");
         from("direct:createSD")
                 .setHeader("recordsDaoColumnMap", constant(map))
