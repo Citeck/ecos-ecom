@@ -95,6 +95,7 @@ public class ReadMailboxSDProcessor implements Processor {
             }
 
             bodyMap.put("createdAutomatically", "true");
+            bodyMap.put("priority", "medium");
 
             exchange.getIn().setBody(bodyMap);
         }
