@@ -5,9 +5,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.Message;
 import org.apache.camel.Processor;
 import org.apache.commons.lang3.StringUtils;
-import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 import ru.citeck.ecos.ecom.dto.MailDTO;
@@ -17,7 +15,6 @@ import ru.citeck.ecos.records2.predicate.model.Predicates;
 import ru.citeck.ecos.records2.rest.RemoteRecordsUtils;
 import ru.citeck.ecos.records3.RecordsService;
 import ru.citeck.ecos.records3.record.dao.query.dto.query.RecordsQuery;
-import springfox.documentation.service.ObjectVendorExtension;
 
 import javax.mail.internet.MimeUtility;
 import java.io.UnsupportedEncodingException;
@@ -27,6 +24,10 @@ import java.util.Map;
 @Slf4j
 @Component
 public class ReadMailboxSDProcessor implements Processor {
+
+    private static final String MAIL_FROM = "From";
+    private static final String MAIL_SUBJECT = "Subject";
+    private static final String MAIL_DATE = "Date";
 
     private static final String EMODEL_APP = "emodel";
     private static final String CLIENT_SK = "clients-type";
@@ -72,7 +73,7 @@ public class ReadMailboxSDProcessor implements Processor {
         String body = message.getBody(String.class);
 
         MailDTO mail = new MailDTO();
-        mail.setContent(html2text(body));
+        mail.setContent(body);
         String from = decode(message.getHeader(MAIL_FROM, String.class));
         mail.setFrom(from);
         String fromAddress = StringUtils.substringBetween(from, "<", ">");
@@ -101,25 +102,15 @@ public class ReadMailboxSDProcessor implements Processor {
         }
     }
 
-    public static String html2text(String html) {
-        return Jsoup.parse(html).wholeText();
-    }
-
-    public static String decode(String value) {
+    private static String decode(String value) {
         try {
             return MimeUtility.decodeText(value);
-        }
-        catch (UnsupportedEncodingException ex) {
+        } catch (UnsupportedEncodingException ex) {
             throw new IllegalStateException(ex);
         }
     }
 
-    public String getEmailDomain(String fromEmail)
-    {
-        return  fromEmail.substring(fromEmail.indexOf("@") + 1);
+    public String getEmailDomain(String fromEmail) {
+        return fromEmail.substring(fromEmail.indexOf("@") + 1);
     }
-
-    private final String MAIL_FROM = "From";
-    private final String MAIL_SUBJECT = "Subject";
-    private final String MAIL_DATE = "Date";
 }
