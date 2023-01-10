@@ -21,7 +21,7 @@ public class ReadMailboxSDRoute extends RouteBuilder {
 
     @Override
     public void configure() {
-        from("imap://" + imap)
+        from(imap)
                 .autoStartup(!Objects.equals(imap, "disabled"))
                 .to("log:INFO?showHeaders=true")
                 .process(readMailboxSDProcessor)
