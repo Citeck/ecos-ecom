@@ -17,7 +17,7 @@
     </repositories>
     <groupId>ru.citeck.ecos</groupId>
     <artifactId>ecos-ecom</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
     <name>ECommunications</name>
     <description>ECommunications</description>
     <properties>
