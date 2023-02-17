@@ -9,3 +9,7 @@
 # Full reference is available at:
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
+logging:
+  level:
+    ru.citeck.ecos.ecom: DEBUG
+    ru.citeck.ecos.records3: DEBUG

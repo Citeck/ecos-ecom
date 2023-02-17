@@ -22,8 +22,8 @@ public class CreateSDRoute extends RouteBuilder {
 
     @Override
     public void configure() {
-        recordsDaoEndpoint.setAppName("emodel");
-        recordsDaoEndpoint.setSourceId("sd-request-type");
+        //recordsDaoEndpoint.setAppName("emodel");
+        //recordsDaoEndpoint.setSourceId("sd-request-type");
         Map<String, String> map = new HashMap<String, String>();
         map.put("subject", "letterTopic");
         //map.put("fromAddress", "email");
@@ -38,7 +38,7 @@ public class CreateSDRoute extends RouteBuilder {
         from("direct:createSD")
                 .setHeader("recordsDaoColumnMap", constant(map))
                 .to("log:INFO?showHeaders=true")
-                .bean("recordsDaoEndpoint");
+                .bean(RecordsDaoEndpoint.class, "mutate(*, emodel, sd-request-type)");
     }
 }
 

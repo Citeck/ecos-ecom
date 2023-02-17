@@ -34,8 +34,9 @@ import java.util.Optional;
  * Possible input body formats: record from data source, xml node, csv-string, map-string
  */
 @Slf4j
-@Component
 @Data
+@Component
+@Scope("prototype")
 public class RecordsDaoEndpoint {
     /**
      * Represents any value of property in transformation map
@@ -92,7 +93,7 @@ public class RecordsDaoEndpoint {
     }
 
     @Handler
-    public void mutate(Exchange exchange) {
+    public void mutate(Exchange exchange, String appName, String sourceId) {
         if (sourceId == null) {
             throw new IllegalArgumentException(
                 "Target data source ID was not defined \n"

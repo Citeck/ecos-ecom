@@ -23,8 +23,8 @@ public class CreateDealRoute extends RouteBuilder {
 
     @Override
     public void configure() {
-        recordsDaoEndpoint.setAppName("emodel");
-        recordsDaoEndpoint.setSourceId("deal");
+        //recordsDaoEndpoint.setAppName("emodel");
+        //recordsDaoEndpoint.setSourceId("deal");
         Map<String, String> map = new HashMap<String, String>();
         map.put("fromAddress", "siteEmail");
         map.put("email", "email");
@@ -36,12 +36,15 @@ public class CreateDealRoute extends RouteBuilder {
         map.put("status", "_status");
         map.put("source", "source");
         map.put("siteFrom", "siteFrom");
+        map.put("content", "emessage");
+        map.put("gaClientId", "ga_client_id");
+        map.put("ymClientId", "ym_client_id");
         //recordsDaoEndpoint.setColumnMap(map);
         from("direct:createDeal")
                 .to("log:INFO?showHeaders=true")
                 .setHeader("recordsDaoColumnMap", constant(map))
                 .process(createDealProcessor)
-                .bean("recordsDaoEndpoint");
+                .bean(RecordsDaoEndpoint.class, "mutate(*, emodel, deal)");
     }
 }
 
