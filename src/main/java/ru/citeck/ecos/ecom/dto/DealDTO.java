@@ -26,6 +26,7 @@ public class DealDTO {
     private String siteFrom;
     private String gaClientId;
     private String ymClientId;
+    private String emessage;
 
     public Map<String, String> toMap() {
         ObjectMapper oMapper = new ObjectMapper();

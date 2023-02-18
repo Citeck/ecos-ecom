@@ -75,6 +75,7 @@ public class CreateDealProcessor implements Processor {
         deal.setSiteFrom(parseDeal(content, DEAL_SITE_FROM, 0));
         deal.setDateReceived(mail.getDate());
         deal.setSource(mail.getKind());
+        deal.setEmessage(mail.getContent());
         deal.setGaClientId(parseDeal(content, GA_CLIENT_ID, 0));
         deal.setYmClientId(parseDeal(content, YM_CLIENT_ID, 0));
 

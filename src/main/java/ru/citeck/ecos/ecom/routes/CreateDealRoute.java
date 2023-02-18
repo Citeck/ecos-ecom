@@ -36,7 +36,7 @@ public class CreateDealRoute extends RouteBuilder {
         map.put("status", "_status");
         map.put("source", "source");
         map.put("siteFrom", "siteFrom");
-        map.put("content", "emessage");
+        map.put("emessage", "emessage");
         map.put("gaClientId", "ga_client_id");
         map.put("ymClientId", "ym_client_id");
         //recordsDaoEndpoint.setColumnMap(map);
