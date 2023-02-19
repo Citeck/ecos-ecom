@@ -27,7 +27,7 @@ public class ReadMailboxCRMRoute extends RouteBuilder {
 
         from(endPoint)
                 .autoStartup(!Objects.equals(imap, "disabled"))
-                .to("log:INFO?showHeaders=true")
+                .to("log:DEBUG?showHeaders=true")
                 .process(readMailboxCRMProcessor)
                 .choice()
                     .when(simple("${exchangeProperty.subject} == 'deal'"))

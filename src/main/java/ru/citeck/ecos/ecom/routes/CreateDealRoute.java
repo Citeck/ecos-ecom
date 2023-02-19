@@ -41,7 +41,6 @@ public class CreateDealRoute extends RouteBuilder {
         map.put("ymClientId", "ym_client_id");
         //recordsDaoEndpoint.setColumnMap(map);
         from("direct:createDeal")
-                .to("log:INFO?showHeaders=true")
                 .setHeader("recordsDaoColumnMap", constant(map))
                 .process(createDealProcessor)
                 .bean(RecordsDaoEndpoint.class, "mutate(*, emodel, deal)");

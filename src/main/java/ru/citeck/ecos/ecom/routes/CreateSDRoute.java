@@ -37,7 +37,6 @@ public class CreateSDRoute extends RouteBuilder {
         //map.put("status", "_status");
         from("direct:createSD")
                 .setHeader("recordsDaoColumnMap", constant(map))
-                .to("log:INFO?showHeaders=true")
                 .bean(RecordsDaoEndpoint.class, "mutate(*, emodel, sd-request-type)");
     }
 }

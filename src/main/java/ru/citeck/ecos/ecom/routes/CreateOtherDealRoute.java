@@ -17,24 +17,30 @@ public class CreateOtherDealRoute extends RouteBuilder {
     @Autowired
     private RecordsDaoEndpoint recordsDaoEndpoint;
 
+    @Autowired
+    private CreateDealProcessor createDealProcessor;
+
     @Override
     public void configure() {
         //recordsDaoEndpoint.setAppName("emodel");
         //recordsDaoEndpoint.setSourceId("deal");
         Map<String, String> map = new HashMap<String, String>();
-        map.put("fromAddress", "email");
+        map.put("fromAddress", "siteEmail");
         map.put("from", "fio");
-        map.put("date", "dateReceived");
+        map.put("email", "email");
+        map.put("company", "company");
+        map.put("phone", "phone");
+        map.put("dateReceived", "dateReceived");
         map.put("content", "description");
         map.put("status", "_status");
-        map.put("kind", "source");
+        map.put("source", "source");
         map.put("emessage", "emessage");
         map.put("gaClientId", "ga_client_id");
         map.put("ymClientId", "ym_client_id");
         //recordsDaoEndpoint.setColumnMap(map);
         from("direct:createOtherDeal")
                 .setHeader("recordsDaoColumnMap", constant(map))
-                .to("log:INFO?showHeaders=true")
+                .process(createDealProcessor)
                 .bean(RecordsDaoEndpoint.class, "mutate(*, emodel, deal)");
     }
 }

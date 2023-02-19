@@ -64,7 +64,7 @@ public class ReadMailboxCRMProcessor implements Processor {
         else {
             mail.setKind("other");
             exchange.setProperty("subject", "other");
-            exchange.getIn().setBody(mail.toMap());
+            //exchange.getIn().setBody(mail.toMap());
         }
     }
 

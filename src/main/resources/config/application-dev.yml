@@ -11,5 +11,7 @@
 # ===================================================================
 logging:
   level:
-    ru.citeck.ecos.ecom: DEBUG
-    ru.citeck.ecos.records3: DEBUG
+    ru.citeck.ecos.ecom: INFO
+    ru.citeck.ecos.records3: INFO
+    #ru.citeck.ecos.ecom: DEBUG
+    #ru.citeck.ecos.records3: DEBUG

@@ -18,7 +18,6 @@ public class NotifyOrderPassRoute extends RouteBuilder {
     public void configure() {
         from("direct:notifyUser")
                 .autoStartup(!Objects.equals(telegramAuthorizationToken, "disabled"))
-                .to("log:INFO?showHeaders=true")
                 .to("telegram:bots?authorizationToken="+telegramAuthorizationToken);
     }
 }

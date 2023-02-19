@@ -27,7 +27,7 @@ public class ReadMailboxSDRoute extends RouteBuilder {
 
         from(endPoint)
                 .autoStartup(!Objects.equals(imap, "disabled"))
-                .to("log:INFO?showHeaders=true")
+                .to("log:DEBUG?showHeaders=true")
                 .process(readMailboxSDProcessor)
                 .choice()
                     .when(header("client").isNotNull())
