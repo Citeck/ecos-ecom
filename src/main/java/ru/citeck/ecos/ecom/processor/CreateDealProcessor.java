@@ -79,6 +79,10 @@ public class CreateDealProcessor implements Processor {
         deal.setGaClientId(parseDeal(content, GA_CLIENT_ID, 0));
         deal.setYmClientId(parseDeal(content, YM_CLIENT_ID, 0));
 
+        if (exchange.getProperty("subject").equals("deal"))
+            deal.setCreatedAutomatically(true);
+        else deal.setCreatedAutomatically(false);
+
         log.debug("deal: " + deal);
         exchange.getIn().setBody(deal.toMap());
     }
