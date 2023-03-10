@@ -75,6 +75,10 @@ public class SmContractTaskResponseProcessor implements Processor {
     }
 
     private void uploadNewContent(SmContractResponseDto response) {
+        if (response.attachment() == null) {
+            return;
+        }
+
         var tempFile = AuthContext.runAsSystem(() -> ecosContentApi.uploadTempFile()
                 .withMimeType(StringUtils.substringBefore(response.attachmentContentType(), ";"))
                 .withName(response.attachmentName())
