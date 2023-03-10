@@ -112,7 +112,7 @@ public class SmContractTaskResponseProcessor implements Processor {
                 () -> recordsService.query(query, TaskData.class)
                         .getRecords()
                         .stream()
-                        //.filter(task -> task.getDefinitionKey().equals(dto.taskName()))
+                        .filter(task -> task.getDefinitionKey().equals(dto.taskName()))
                         .findFirst()
                         .orElseThrow(() -> new IllegalStateException("No task found for record " + dto.record())));
     }
