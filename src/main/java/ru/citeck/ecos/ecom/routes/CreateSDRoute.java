@@ -17,9 +17,6 @@ public class CreateSDRoute extends RouteBuilder {
 
     static final String ROUTE_ID = "createSDRoute";
 
-    @Autowired
-    private RecordsDaoEndpoint recordsDaoEndpoint;
-
     @Override
     public void configure() {
         //recordsDaoEndpoint.setAppName("emodel");

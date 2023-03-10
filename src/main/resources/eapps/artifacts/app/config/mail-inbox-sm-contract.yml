@@ -1,0 +1,6 @@
+---
+id: mail-inbox-sm-contract
+name:
+  ru: Конфигурация почтового ящика IMAP для чтения писем в Sm Contract Camel route
+  en: Main inbox IMAP configuration for Sm Contract Camel route
+value: disabled

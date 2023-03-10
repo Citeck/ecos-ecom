@@ -15,9 +15,6 @@ public class CreateOtherDealRoute extends RouteBuilder {
     static final String ROUTE_ID = "createOtherDealRoute";
 
     @Autowired
-    private RecordsDaoEndpoint recordsDaoEndpoint;
-
-    @Autowired
     private CreateDealProcessor createDealProcessor;
 
     @Override

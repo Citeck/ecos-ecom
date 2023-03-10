@@ -1,20 +1,17 @@
 package ru.citeck.ecos.ecom.service.cameldsl;
 
 import com.google.common.base.Splitter;
-import org.apache.xerces.dom.DeferredElementNSImpl;
 import ecos.com.fasterxml.jackson210.core.JsonProcessingException;
 import ecos.com.fasterxml.jackson210.core.type.TypeReference;
 import ecos.com.fasterxml.jackson210.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.camel.BeanInject;
 import org.apache.camel.Exchange;
 import org.apache.camel.ExchangePropertyKey;
 import org.apache.camel.Handler;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.xerces.dom.DeferredElementNSImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import ru.citeck.ecos.commons.data.ObjectData;
@@ -35,8 +32,6 @@ import java.util.Optional;
  */
 @Slf4j
 @Data
-@Component
-@Scope("prototype")
 public class RecordsDaoEndpoint {
     /**
      * Represents any value of property in transformation map
@@ -96,8 +91,8 @@ public class RecordsDaoEndpoint {
     public void mutate(Exchange exchange, String appName, String sourceId) {
         if (sourceId == null) {
             throw new IllegalArgumentException(
-                "Target data source ID was not defined \n"
-                    + "(See configuration yml-file at 'beans'-section properties.sourceId)");
+                    "Target data source ID was not defined \n"
+                            + "(See configuration yml-file at 'beans'-section properties.sourceId)");
         }
         this.setColumnMap(exchange.getMessage().getHeader("recordsDaoColumnMap", HashMap.class));
         Object body = exchange.getMessage().getBody();
@@ -124,29 +119,29 @@ public class RecordsDaoEndpoint {
         ObjectData targetAttributesData = ObjectData.create();
         targetAttributesData.set("id", idValue);
         columnMap.forEach((srcColumn, targetColumn) -> {
-                Object value = propsMap.get(srcColumn);
-                if (tmpValueConvertMap != null && tmpValueConvertMap.containsKey(srcColumn)) {
-                    Map<String, String> valueMap = tmpValueConvertMap.get(srcColumn);
-                    String replacementValue = valueMap.get(String.valueOf(value));
-                    if (StringUtils.isNotBlank(replacementValue)) {
-                        value = replacementValue;
-                    } else {
-                        String anyValue = valueMap.get(ANY_VALUE);
-                        if (StringUtils.isNotBlank(anyValue)) {
-                            value = anyValue;
+                    Object value = propsMap.get(srcColumn);
+                    if (tmpValueConvertMap != null && tmpValueConvertMap.containsKey(srcColumn)) {
+                        Map<String, String> valueMap = tmpValueConvertMap.get(srcColumn);
+                        String replacementValue = valueMap.get(String.valueOf(value));
+                        if (StringUtils.isNotBlank(replacementValue)) {
+                            value = replacementValue;
+                        } else {
+                            String anyValue = valueMap.get(ANY_VALUE);
+                            if (StringUtils.isNotBlank(anyValue)) {
+                                value = anyValue;
+                            }
                         }
                     }
+                    targetAttributesData.set(targetColumn, value);
                 }
-                targetAttributesData.set(targetColumn, value);
-            }
         );
         RecordRef ref = RecordRef.create(appName, sourceId, "");
         RecordAtts recordAtts = new RecordAtts(ref, targetAttributesData);
         log.debug("Record atts to mutate {}", recordAtts);
         try {
             RecordRef resultRef = AuthContext.runAsSystemJ(() -> {
-                    return recordsService.mutate(recordAtts);
-                });
+                return recordsService.mutate(recordAtts);
+            });
             log.debug("Mutated {}", resultRef);
         } catch (Exception e) {
             log.error("Failed to mutate record {}", recordAtts, e);
@@ -186,8 +181,8 @@ public class RecordsDaoEndpoint {
                 try {
                     log.trace("Convert body to Map");
                     return Splitter.on(delimiter).trimResults().omitEmptyStrings()
-                        .withKeyValueSeparator(keyValueSeparator)
-                        .split((String) body);
+                            .withKeyValueSeparator(keyValueSeparator)
+                            .split((String) body);
                 } catch (IllegalArgumentException e) {
                     log.trace("Failed conversion body to Map");
                     if (index == 0) {

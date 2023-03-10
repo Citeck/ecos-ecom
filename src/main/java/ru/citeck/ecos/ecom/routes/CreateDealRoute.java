@@ -1,6 +1,5 @@
 package ru.citeck.ecos.ecom.routes;
 
-import org.apache.camel.Expression;
 import org.apache.camel.builder.RouteBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,9 +16,6 @@ public class CreateDealRoute extends RouteBuilder {
 
     @Autowired
     private CreateDealProcessor createDealProcessor;
-
-    @Autowired
-    private RecordsDaoEndpoint recordsDaoEndpoint;
 
     @Override
     public void configure() {
