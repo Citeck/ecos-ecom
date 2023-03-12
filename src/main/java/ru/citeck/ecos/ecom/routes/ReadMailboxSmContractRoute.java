@@ -30,8 +30,13 @@ public class ReadMailboxSmContractRoute extends RouteBuilder {
                 .autoStartup(!Objects.equals(imap, "disabled"))
                 .tracing()
                 .process(readMailboxSmContractProcessor)
-                .log("ReadMailboxSmContractRoute: ${body}")
-                .process(smContractTaskResponseProcessor)
+                .choice()
+                    .when(header("taskResolution").isNotNull())
+                        .log("ReadMailboxSmContractRoute: ${body}")
+                        .process(smContractTaskResponseProcessor)
+                    .otherwise()
+                        .log("Its not a task response. Skipping...")
+                .endChoice()
                 .end();
     }
 }

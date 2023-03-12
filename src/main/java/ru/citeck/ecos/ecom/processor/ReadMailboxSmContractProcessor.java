@@ -48,11 +48,11 @@ public class ReadMailboxSmContractProcessor implements Processor {
         }
 
         var message = exchange.getIn();
-        var subject = message.getHeader(MAIL_SUBJECT, String.class);
+        var subject = decode(message.getHeader(MAIL_SUBJECT, String.class));
 
         var split = subject.split("#");
         if (split.length != 3) {
-            log.debug("Subject is not valid, skipping...\n" + subject);
+            log.info("Subject is not valid, skipping...\n" + subject);
             return;
         }
 
@@ -61,12 +61,16 @@ public class ReadMailboxSmContractProcessor implements Processor {
         var taskResolution = split[2];
 
         var user = getUser(message);
+        if (user == null || user.isEmpty()) {
+            log.info("User is not found, skipping...");
+            return;
+        }
 
         String body = message.getBody(String.class);
         var comment = getComment(body);
 
-        var userAuthorities = AuthContext.runAsSystem(
-                () -> recordsService.getAtt(user, "authorities.list[]").asList(String.class)
+        var userAuthorities = AuthContext.runAsSystem(() ->
+                recordsService.getAtt(user, "authorities.list[]").asList(String.class)
         );
 
         byte[] attachment = null;
@@ -101,7 +105,7 @@ public class ReadMailboxSmContractProcessor implements Processor {
                 contentType
         );
 
-
+        exchange.getIn().setHeader("taskResolution", taskResolution);
         exchange.getIn().setBody(smResponseDto);
     }
 

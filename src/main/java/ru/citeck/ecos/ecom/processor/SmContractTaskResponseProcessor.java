@@ -20,6 +20,7 @@ import ru.citeck.ecos.webapp.api.content.EcosContentApi;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -35,36 +36,54 @@ public class SmContractTaskResponseProcessor implements Processor {
     public void process(Exchange exchange) throws Exception {
         var response = exchange.getIn().getBody(SmContractResponseDto.class);
 
-        completeTask(response);
+        var completionResult = completeTask(response);
+        if (!completionResult) {
+            log.warn("Task completion failed for record {} and user {}", response.record(), response.user());
+            return;
+        }
+
         addComment(response);
         uploadNewContent(response);
     }
 
-    private void completeTask(SmContractResponseDto response) {
+    private boolean completeTask(SmContractResponseDto response) {
         var task = getUserTaskToComplete(response);
-        var outcome = task.getPossibleOutcomes()
+        if (task.isEmpty()) {
+            log.warn("No task found for record {} and user {}", response.record(), response.user());
+            return false;
+        }
+
+        var outcome = task.get().getPossibleOutcomes()
                 .stream()
                 .filter(out -> out.getId().equals(response.resolution()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No outcome found: " + response.record()));
+                .findFirst();
+        if (outcome.isEmpty()) {
+            log.warn("No outcome found for task {} and resolution {}", task.get().getId(), response.resolution());
+            return false;
+        }
 
-
-        var atts = new RecordAtts(task.id);
+        var atts = new RecordAtts(task.get().id);
         atts.set("outcome_" + response.resolution(), true);
 
         var formInfo = new HashMap<String, Object>();
-        formInfo.put("submitName", outcome.name);
+        formInfo.put("submitName", outcome.get().name);
 
         atts.set("_formInfo", formInfo);
 
-        log.debug("Completing task {} with outcome {}", task.id, outcome);
+        log.debug("Completing task {} with outcome {}", task.get().id, outcome);
 
         AuthContext.runAsFullJ(response.user().getLocalId(), response.userAuthorities(), () -> {
             recordsService.mutate(atts);
         });
+
+        return true;
     }
 
     private void addComment(SmContractResponseDto response) {
+        if (StringUtils.isBlank(response.comment())) {
+            return;
+        }
+
         var atts = new RecordAtts("emodel/comment@");
         atts.set("record", response.record());
         atts.set("text", response.comment());
@@ -95,7 +114,7 @@ public class SmContractTaskResponseProcessor implements Processor {
         });
     }
 
-    private TaskData getUserTaskToComplete(SmContractResponseDto dto) {
+    private Optional<TaskData> getUserTaskToComplete(SmContractResponseDto dto) {
         var taskQuery = new TaskQuery();
         taskQuery.setActive(true);
         taskQuery.setDocument(dto.record());
@@ -114,7 +133,7 @@ public class SmContractTaskResponseProcessor implements Processor {
                         .stream()
                         .filter(task -> task.getDefinitionKey().equals(dto.taskName()))
                         .findFirst()
-                        .orElseThrow(() -> new IllegalStateException("No task found for record " + dto.record())));
+        );
     }
 
     @Data
