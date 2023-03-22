@@ -1,10 +1,7 @@
 package ru.citeck.ecos.ecom.routes;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.camel.Exchange;
-import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.citeck.ecos.ecom.service.cameldsl.RecordsDaoEndpoint;
 
@@ -15,15 +12,12 @@ import java.util.Map;
 @Component
 public class CreateSDRoute extends RouteBuilder {
 
-    static final String ROUTE_ID = "createSDRoute";
+    public static final String ID = "createSD";
 
     @Override
     public void configure() {
-        //recordsDaoEndpoint.setAppName("emodel");
-        //recordsDaoEndpoint.setSourceId("sd-request-type");
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         map.put("subject", "letterTopic");
-        //map.put("fromAddress", "email");
         map.put("from", "author");
         map.put("date", "dateReceived");
         map.put("content", "letterContent");
@@ -31,8 +25,8 @@ public class CreateSDRoute extends RouteBuilder {
         map.put("initiator", "initiator");
         map.put("createdAutomatically", "createdAutomatically");
         map.put("priority", "priority");
-        //map.put("status", "_status");
-        from("direct:createSD")
+
+        from("direct:" + ID)
                 .setHeader("recordsDaoColumnMap", constant(map))
                 .bean(RecordsDaoEndpoint.class, "mutate(*, emodel, sd-request-type)");
     }

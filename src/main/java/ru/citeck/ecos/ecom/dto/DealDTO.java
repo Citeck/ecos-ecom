@@ -2,14 +2,10 @@ package ru.citeck.ecos.ecom.dto;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
-import lombok.ToString;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
-@ToString(includeFieldNames=true)
 @Data
 public class DealDTO {
     private String from;

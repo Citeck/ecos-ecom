@@ -3,28 +3,24 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>ru.citeck.ecos.webapp</groupId>
-        <artifactId>ecos-webapp-spring-simple-parent</artifactId>
-        <version>2.1.0</version>
-    </parent>
-
-    <repositories>
-        <repository>
-            <id>citeck-public</id>
-            <url>https://nexus.citeck.ru/repository/maven-public</url>
-        </repository>
-    </repositories>
     <groupId>ru.citeck.ecos</groupId>
     <artifactId>ecos-ecom</artifactId>
     <version>0.0.7-SNAPSHOT</version>
     <name>ECommunications</name>
     <description>ECommunications</description>
+
+    <parent>
+        <groupId>ru.citeck.ecos.webapp</groupId>
+        <artifactId>ecos-webapp-spring-simple-parent</artifactId>
+        <version>2.2.0</version>
+    </parent>
+
     <properties>
-        <camel-core.version>3.12.0</camel-core.version>
-        <camel-telegram.version>3.12.13</camel-telegram.version>
-        <jsoup.version>1.15.3</jsoup.version>
+        <camel-core.version>3.20.2</camel-core.version>
+        <ecos-camel-telegram.version>3.12.13</ecos-camel-telegram.version>
+        <jsoup.version>1.15.4</jsoup.version>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.camel</groupId>
@@ -41,16 +37,17 @@
             <artifactId>camel-spring</artifactId>
             <version>${camel-core.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.camel.components</groupId>
-            <artifactId>ecos-camel-telegram</artifactId>
-            <version>${camel-telegram.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.telegram</groupId>
-            <artifactId>telegrambots</artifactId>
-            <version>3.5</version>
-        </dependency>
+        <!--TODO: increase telegram camel version and uncomment OrderPass Processor-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.camel.components</groupId>-->
+<!--            <artifactId>ecos-camel-telegram</artifactId>-->
+<!--            <version>${ecos-camel-telegram.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.telegram</groupId>-->
+<!--            <artifactId>telegrambots</artifactId>-->
+<!--            <version>3.5</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.apache.camel.springboot</groupId>
             <artifactId>camel-mail-starter</artifactId>
@@ -69,5 +66,14 @@
             <version>2.9.1</version>
         </dependency>
     </dependencies>
+
+
+    <repositories>
+        <repository>
+            <id>citeck-public</id>
+            <url>https://nexus.citeck.ru/repository/maven-public</url>
+        </repository>
+    </repositories>
+
 
 </project>

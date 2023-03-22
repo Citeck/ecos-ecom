@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Represents Camel-Endpoint.
@@ -37,7 +38,7 @@ public class RecordsDaoEndpoint {
      * Represents any value of property in transformation map
      */
     private static final String ANY_VALUE = "*";
-    //@BeanInject("endpointRecordService")
+
     @Autowired
     private RecordsService recordsService;
     /**
@@ -88,7 +89,7 @@ public class RecordsDaoEndpoint {
     }
 
     @Handler
-    public void mutate(Exchange exchange, String appName, String sourceId) {
+    public void mutate(Exchange exchange, String appName, String sourceId, String runAsUser) {
         if (sourceId == null) {
             throw new IllegalArgumentException(
                     "Target data source ID was not defined \n"
@@ -135,14 +136,31 @@ public class RecordsDaoEndpoint {
                     targetAttributesData.set(targetColumn, value);
                 }
         );
+
         RecordRef ref = RecordRef.create(appName, sourceId, "");
         RecordAtts recordAtts = new RecordAtts(ref, targetAttributesData);
-        log.debug("Record atts to mutate {}", recordAtts);
+        log.debug("Record atts to mutate {}, as user {}", recordAtts, runAsUser);
+
+        mutateSafeAsUserOrSystem(recordAtts, runAsUser);
+    }
+
+    private void mutateSafeAsUserOrSystem(RecordAtts recordAtts, String runAsUser) {
         try {
-            RecordRef resultRef = AuthContext.runAsSystemJ(() -> {
-                return recordsService.mutate(recordAtts);
-            });
-            log.debug("Mutated {}", resultRef);
+            AtomicReference<RecordRef> resultRef = new AtomicReference<>(RecordRef.EMPTY);
+
+            if (StringUtils.isBlank(runAsUser)) {
+                AuthContext.runAsSystemJ(() -> resultRef.set(recordsService.mutate(recordAtts)));
+            } else {
+                var userAuthorities = AuthContext.runAsSystem(() ->
+                        recordsService.getAtt(runAsUser, "authorities.list[]").asList(String.class)
+                );
+
+                AuthContext.runAsFullJ(runAsUser, userAuthorities, () -> resultRef.set(
+                        recordsService.mutate(recordAtts)
+                ));
+            }
+
+            log.debug("Mutated {}", resultRef.get());
         } catch (Exception e) {
             log.error("Failed to mutate record {}", recordAtts, e);
         }
