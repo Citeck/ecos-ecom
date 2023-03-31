@@ -43,6 +43,8 @@ public class ReadMailboxSDProcessor implements Processor {
 
     private static final String SD_CODE__PATTERN = "\\((SD-\\d+)\\)";
 
+    private static final String SD_RESPONSE_MAIL_PREFIX = "Re: (SD-";
+
     @EcosConfig("app/service-desk$default-client")
     private EntityRef defaultClient = EntityRef.EMPTY;
 
@@ -161,7 +163,7 @@ public class ReadMailboxSDProcessor implements Processor {
     }
 
     private String getMailKind(String title) {
-        if (StringUtils.startsWith(title, "Re:")) {
+        if (StringUtils.startsWith(title, SD_RESPONSE_MAIL_PREFIX)) {
             return "reply";
         } else {
             return "new";
