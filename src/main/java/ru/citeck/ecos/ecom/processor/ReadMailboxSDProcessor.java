@@ -143,7 +143,7 @@ public class ReadMailboxSDProcessor implements Processor {
                 () -> recordsService.getAtts(client, ClientUsers.class)
         );
         for (UserData user : clientUsers.users) {
-            if (user.getEmail().equals(email)) {
+            if (user.getEmail().equalsIgnoreCase(email)) {
                 return user.ref;
             }
         }
