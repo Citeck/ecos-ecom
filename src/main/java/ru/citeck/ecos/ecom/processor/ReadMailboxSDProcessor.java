@@ -13,6 +13,7 @@ import ru.citeck.ecos.config.lib.consumer.bean.EcosConfig;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
 import ru.citeck.ecos.ecom.dto.MailDTO;
 import ru.citeck.ecos.ecom.service.cameldsl.MailBodyExtractor;
+import ru.citeck.ecos.ecom.service.documents.DocumentDao;
 import ru.citeck.ecos.records2.RecordRef;
 import ru.citeck.ecos.records2.predicate.PredicateService;
 import ru.citeck.ecos.records2.predicate.model.Predicates;
@@ -23,10 +24,8 @@ import ru.citeck.ecos.webapp.api.constants.AppName;
 import ru.citeck.ecos.webapp.api.entity.EntityRef;
 
 import javax.mail.internet.MimeUtility;
-import java.io.UnsupportedEncodingException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @PropertySource(ignoreResourceNotFound = true, value = "classpath:application.yml")
@@ -45,11 +44,18 @@ public class ReadMailboxSDProcessor implements Processor {
 
     private static final String SD_RESPONSE_MAIL_PREFIX = "Re: (SD-";
 
+    private static final String MAIL_KIND_REPLY = "reply";
+
+    private final static String MAIL_KIND_NEW = "new";
+
     @EcosConfig("app/service-desk$default-client")
     private EntityRef defaultClient = EntityRef.EMPTY;
 
     @Autowired
     private RecordsService recordsService;
+
+    @Autowired
+    private DocumentDao documentDao;
 
     @Override
     public void process(Exchange exchange) throws Exception {
@@ -92,13 +98,15 @@ public class ReadMailboxSDProcessor implements Processor {
 
         exchange.getIn().setHeader("client", client.toString());
         exchange.getIn().setHeader("kind", mailKind);
-
+        EntityRef sdRecord = getSDRecord(mailKind, mail.getSubject());
+        if (sdRecord != null){
+            mail.setDocuments(documentDao.saveDocumentsForSDRecord(exchange, sdRecord));
+        }
         Map<String, String> bodyMap = mail.toMap();
         bodyMap.put("client", client.toString());
         bodyMap.put("initiator", initiator.toString());
 
-        if ("reply".equals(mailKind)) {
-            var sdRecord = findSdRequestByTitle(mail.getSubject());
+        if (MAIL_KIND_REPLY.equals(mailKind)) {
             if (sdRecord != null) {
                 bodyMap.put("record", sdRecord.toString());
                 exchange.getIn().setHeader("runAsUser", initiator.getLocalId());
@@ -109,6 +117,13 @@ public class ReadMailboxSDProcessor implements Processor {
         bodyMap.put("priority", "medium");
 
         exchange.getIn().setBody(bodyMap);
+    }
+
+    private EntityRef getSDRecord(String mailKind, String subject) {
+        if (MAIL_KIND_REPLY.equals(mailKind)) {
+            return findSdRequestByTitle(subject);
+        }
+        return null;
     }
 
     private static String decode(String value) {
@@ -164,9 +179,9 @@ public class ReadMailboxSDProcessor implements Processor {
 
     private String getMailKind(String title) {
         if (StringUtils.startsWith(title, SD_RESPONSE_MAIL_PREFIX)) {
-            return "reply";
+            return MAIL_KIND_REPLY;
         } else {
-            return "new";
+            return MAIL_KIND_NEW;
         }
     }
 
@@ -188,6 +203,8 @@ public class ReadMailboxSDProcessor implements Processor {
 
         return null;
     }
+
+
 
     @Data
     private static class ClientUsers {

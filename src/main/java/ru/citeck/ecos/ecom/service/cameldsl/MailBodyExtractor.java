@@ -73,12 +73,13 @@ public class MailBodyExtractor {
     }
 
     private String removeVulnerabilities(String data) {
+        if (data == null){
+            return null;
+        }
+
         Document doc = Jsoup.parse(data);
-
         TAGS_TO_REMOVE.forEach(tagsToRemove -> doc.getElementsByTag(tagsToRemove).remove());
-
         return doc.toString();
-
     }
 
     private String getText(Part p) {
