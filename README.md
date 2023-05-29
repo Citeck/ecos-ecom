@@ -4,39 +4,13 @@
 
 Welcome to the Citeck `ecos-ecom` repository! The microservice provides a solution for creating and managing email newsletters, chat bots within the platform.
 
-## Development
+## Get started
 
-To start your application in the dev profile, simply run:
+If you are new to ECOS platform and would like to load the software locally, we recommend you download the Dockerized version from [Demo repository](https://github.com/Citeck/ecos-community-demo).
 
-    mvn spring-boot:run
+## Useful Links
 
-
-### Building for production
-
-To optimize the ecom application for production, run:
-
-    mvn clean package
-
-To ensure everything worked, run:
-
-    mvn spring-boot:run -Pprod
-
-### Testing
-
-To launch your application's tests, run:
-
-    mvn test
-
-### Using docker-compose
-
-You can fully dockerize your application and all the services that it depends on.
-To achieve this, first build a docker image of your app by running:
-
-    mvn jib:dockerBuild
-
-Then run:
-
-    docker-compose -f src/main/docker/app.yml up -d
+- [Documentation](https://citeck-ecos.readthedocs.io/ru/latest/index.html) provides more in-depth information.
 
 ## Contributing
 
