@@ -55,7 +55,7 @@ public class DocumentDaoEndpoint implements DocumentDao {
     }
 
     private DataValue createDataValueForDoc(EntityRef entityRef) {
-        if (entityRef.isEmpty()){
+        if (entityRef == null || entityRef.isEmpty() ){
             throw new IllegalArgumentException("EntityRef cannot be empty");
         }
         return DataValue.createObj().set(RecordConstants.ATT_PARENT, entityRef)
