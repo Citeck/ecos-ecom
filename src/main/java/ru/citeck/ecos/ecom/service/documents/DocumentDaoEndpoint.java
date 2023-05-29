@@ -29,6 +29,9 @@ public class DocumentDaoEndpoint implements DocumentDao {
         List<EntityRef> docs = new ArrayList<>();
         AttachmentMessage attachmentMessage = exchange.getMessage(AttachmentMessage.class);
         Map<String, DataHandler> attachments = attachmentMessage.getAttachments();
+        if (attachments == null) {
+            return Collections.emptyList();
+        }
         Set<String> docsName = attachments.keySet();
         if (CollectionUtils.isEmpty(docsName)) {
             return Collections.emptyList();
