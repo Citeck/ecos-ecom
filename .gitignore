@@ -31,8 +31,5 @@ build/
 
 ### VS Code ###
 .vscode/
-/.mvn/wrapper/
-/mvnw
-/mvnw.cmd
 
 .DS_Store

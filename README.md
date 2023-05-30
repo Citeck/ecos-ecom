@@ -12,6 +12,57 @@ If you are new to ECOS platform and would like to load the software locally, we 
 
 - [Documentation](https://citeck-ecos.readthedocs.io/ru/latest/index.html) provides more in-depth information.
 
+## Dependencies
+
+This application requires the following applications from ECOS deployment to work:
+
+* zookeeper
+* rabbitmq
+* ecos-model
+* ecos-registry
+
+## Development
+
+To start your application in the dev profile, simply run:
+
+```
+./mvnw spring-boot:run
+```
+
+If your IDE supports starting Spring Boot applications directly, then you can easily run the class 'ru.citeck.ecos.ecom.EComApplication' without additional setup.
+
+### Building for production
+
+To build the application for production, run:
+
+```
+./mvnw -Pprod clean package jib:dockerBuild -Djib.docker.image.tag=custom 
+```
+
+To ensure everything worked, stop original ecos-ecom container and start ecos-ecom:custom instead of it.
+
+### Testing
+
+To launch your application's tests, run:
+
+```
+./mvnw clean test
+```
+
+#### Code quality
+
+Sonar is used to analyse code quality. You can start a local Sonar server (accessible on http://localhost:9001) with:
+
+```
+docker compose -f docker/sonar.yml up -d
+```
+
+Then, run a Sonar analysis:
+
+```
+./mvnw -Pprod clean test sonar:sonar
+```
+
 ## Contributing
 
 We welcome contributions from the community to make ECOS even better. Everyone interacting in the Citeck project’s codebases, issue trackers, chat rooms, and forum is expected to follow the [contributor code of conduct](https://github.com/rubygems/rubygems/blob/master/CODE_OF_CONDUCT.md).
