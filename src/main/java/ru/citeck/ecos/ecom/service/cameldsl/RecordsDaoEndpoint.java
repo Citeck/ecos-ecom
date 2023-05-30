@@ -168,7 +168,9 @@ public class RecordsDaoEndpoint {
 
             log.debug("Mutated {}", resultRef.get());
             List<EntityRef> savedDocuments = documentDao.saveDocumentsForSDRecord(exchange, resultRef.get());
-            savedDocuments.forEach(entityRef -> log.debug("Saved document {}", entityRef));
+            if (!savedDocuments.isEmpty()){
+                savedDocuments.forEach(entityRef -> log.debug("Saved document {}", entityRef));
+            }
         } catch (Exception e) {
             log.error("Failed to mutate record {}", recordAtts, e);
         }
