@@ -16,14 +16,14 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
+import ru.citeck.ecos.ecom.service.documents.DocumentDao;
 import ru.citeck.ecos.records2.RecordRef;
 import ru.citeck.ecos.records3.RecordsService;
 import ru.citeck.ecos.records3.record.atts.dto.RecordAtts;
+import ru.citeck.ecos.webapp.api.content.EcosContentApi;
+import ru.citeck.ecos.webapp.api.entity.EntityRef;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -40,7 +40,13 @@ public class RecordsDaoEndpoint {
     private static final String ANY_VALUE = "*";
 
     @Autowired
+    EcosContentApi ecosContentApi;
+
+    @Autowired
     private RecordsService recordsService;
+
+    @Autowired
+    private DocumentDao documentDao;
     /**
      * Source ID of target RecordDao
      */
@@ -141,10 +147,10 @@ public class RecordsDaoEndpoint {
         RecordAtts recordAtts = new RecordAtts(ref, targetAttributesData);
         log.debug("Record atts to mutate {}, as user {}", recordAtts, runAsUser);
 
-        mutateSafeAsUserOrSystem(recordAtts, runAsUser);
+        mutateSafeAsUserOrSystem(recordAtts, runAsUser, exchange);
     }
 
-    private void mutateSafeAsUserOrSystem(RecordAtts recordAtts, String runAsUser) {
+    private void mutateSafeAsUserOrSystem(RecordAtts recordAtts, String runAsUser, Exchange exchange) {
         try {
             AtomicReference<RecordRef> resultRef = new AtomicReference<>(RecordRef.EMPTY);
 
@@ -161,6 +167,10 @@ public class RecordsDaoEndpoint {
             }
 
             log.debug("Mutated {}", resultRef.get());
+            List<EntityRef> savedDocuments = documentDao.saveDocumentsForSDRecord(exchange, resultRef.get());
+            if (!savedDocuments.isEmpty()){
+                savedDocuments.forEach(entityRef -> log.debug("Saved document {}", entityRef));
+            }
         } catch (Exception e) {
             log.error("Failed to mutate record {}", recordAtts, e);
         }
