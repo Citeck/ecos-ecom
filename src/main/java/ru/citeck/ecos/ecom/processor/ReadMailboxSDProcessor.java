@@ -51,10 +51,7 @@ public class ReadMailboxSDProcessor implements Processor {
     @EcosConfig("app/service-desk$default-client")
     private EntityRef defaultClient = EntityRef.EMPTY;
 
-    @Autowired
     private RecordsService recordsService;
-
-    @Autowired
     private DocumentDao documentDao;
 
     @Override
@@ -210,7 +207,15 @@ public class ReadMailboxSDProcessor implements Processor {
         return null;
     }
 
+    @Autowired
+    public void setRecordsService(RecordsService recordsService) {
+        this.recordsService = recordsService;
+    }
 
+    @Autowired
+    public void setDocumentDao(DocumentDao documentDao) {
+        this.documentDao = documentDao;
+    }
 
     @Data
     private static class ClientUsers {

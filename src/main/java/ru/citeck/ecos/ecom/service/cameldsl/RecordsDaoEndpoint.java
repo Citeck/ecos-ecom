@@ -39,14 +39,10 @@ public class RecordsDaoEndpoint {
      */
     private static final String ANY_VALUE = "*";
 
-    @Autowired
-    EcosContentApi ecosContentApi;
-
-    @Autowired
+    private EcosContentApi ecosContentApi;
     private RecordsService recordsService;
-
-    @Autowired
     private DocumentDao documentDao;
+
     /**
      * Source ID of target RecordDao
      */
@@ -253,5 +249,20 @@ public class RecordsDaoEndpoint {
                 log.error("Failed to parse the transform value map", e);
             }
         }
+    }
+
+    @Autowired
+    public void setEcosContentApi(EcosContentApi ecosContentApi) {
+        this.ecosContentApi = ecosContentApi;
+    }
+
+    @Autowired
+    public void setRecordsService(RecordsService recordsService) {
+        this.recordsService = recordsService;
+    }
+
+    @Autowired
+    public void setDocumentDao(DocumentDao documentDao) {
+        this.documentDao = documentDao;
     }
 }

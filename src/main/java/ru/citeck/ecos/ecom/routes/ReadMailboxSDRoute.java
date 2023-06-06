@@ -18,7 +18,6 @@ public class ReadMailboxSDRoute extends RouteBuilder {
     @EcosConfig("mail-inbox-sd")
     private String imap;
 
-    @Autowired
     private ReadMailboxSDProcessor readMailboxSDProcessor;
 
     @Override
@@ -46,5 +45,9 @@ public class ReadMailboxSDRoute extends RouteBuilder {
                         .log(LoggingLevel.WARN, "No user client or initiator found with email from: ${header.From}")
                 .end();
     }
-}
 
+    @Autowired
+    public void setReadMailboxSDProcessor(ReadMailboxSDProcessor readMailboxSDProcessor) {
+        this.readMailboxSDProcessor = readMailboxSDProcessor;
+    }
+}

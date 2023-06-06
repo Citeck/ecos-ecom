@@ -21,8 +21,7 @@ import java.util.*;
 @Slf4j
 public class DocumentDaoEndpoint implements DocumentDao {
 
-    @Autowired
-    EcosContentApi ecosContentApi;
+    private EcosContentApi ecosContentApi;
 
     @SneakyThrows
     public List<EntityRef> saveDocumentsForSDRecord(Exchange exchange, EntityRef entityRef) {
@@ -60,5 +59,10 @@ public class DocumentDaoEndpoint implements DocumentDao {
         }
         return DataValue.createObj().set(RecordConstants.ATT_PARENT, entityRef)
                 .set(RecordConstants.ATT_PARENT_ATT, "docs:documents");
+    }
+
+    @Autowired
+    public void setEcosContentApi(EcosContentApi ecosContentApi) {
+        this.ecosContentApi = ecosContentApi;
     }
 }
