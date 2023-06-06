@@ -99,9 +99,11 @@ public class ReadMailboxSDProcessor implements Processor {
         exchange.getIn().setHeader("client", client.toString());
         exchange.getIn().setHeader("kind", mailKind);
         EntityRef sdRecord = getSDRecord(mailKind, mail.getSubject());
-        List<EntityRef> savedDocuments = documentDao.saveDocumentsForSDRecord(exchange, sdRecord);
-        if (sdRecord != null && !savedDocuments.isEmpty()){
-            mail.setDocuments(savedDocuments);
+        if (EntityRef.isNotEmpty(sdRecord)) {
+            List<EntityRef> savedDocuments = documentDao.saveDocumentsForSDRecord(exchange, sdRecord);
+            if (!savedDocuments.isEmpty()) {
+                mail.setDocuments(savedDocuments);
+            }
         }
         Map<String, String> bodyMap = mail.toMap();
         bodyMap.put("client", client.toString());
