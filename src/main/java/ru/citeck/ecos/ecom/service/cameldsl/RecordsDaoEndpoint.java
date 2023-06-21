@@ -11,6 +11,9 @@ import org.apache.camel.ExchangePropertyKey;
 import org.apache.camel.Handler;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.xerces.dom.DeferredElementNSImpl;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.safety.Safelist;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -190,17 +193,16 @@ public class RecordsDaoEndpoint {
             String allLinks = StringUtils.join(links, ", ");
 
         if (StringUtils.isBlank(runAsUser)) {
-            AtomicReference<DataValue> d = new AtomicReference<>();
-            AuthContext.runAsSystemJ(() -> d.set(recordsService.getAtt(ref, "letterContent")));
-            AuthContext.runAsSystemJ(() -> recordsService.mutateAtt(ref, "letterContent", d.get() + " " + allLinks));
+            AtomicReference<DataValue> content = new AtomicReference<>();
+            AuthContext.runAsSystemJ(() -> content.set(recordsService.getAtt(ref, "letterContent")));
+            AuthContext.runAsSystemJ(() -> recordsService.mutateAtt(ref, "letterContent", removeImageTag(content.get().asText()) + " " + allLinks));
         } else {
             var userAuthorities = AuthContext.runAsSystem(() ->
                     recordsService.getAtt(runAsUser, "authorities.list[]").asList(String.class)
             );
-            AtomicReference<DataValue> d = new AtomicReference<>();
-            AuthContext.runAsFullJ(runAsUser, userAuthorities, () -> d.set(recordsService.getAtt(ref, "letterContent")));
-            AuthContext.runAsFullJ(runAsUser, userAuthorities, () -> recordsService.mutateAtt(ref, "letterContent",
-                    d.get() + " " + allLinks));
+            AtomicReference<DataValue> content = new AtomicReference<>();
+            AuthContext.runAsFullJ(runAsUser, userAuthorities, () -> content.set(recordsService.getAtt(ref, "letterContent")));
+            AuthContext.runAsFullJ(runAsUser, userAuthorities, () -> recordsService.mutateAtt(ref, "letterContent", removeImageTag(content.get().asText()) + " " + allLinks));
         }
     }
 
@@ -287,6 +289,13 @@ public class RecordsDaoEndpoint {
         return ecosWebAppProps.getWebUrl();
     }
 
+    private String removeImageTag(String text){
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+        return Jsoup.clean(text, Safelist.basic());
+    }
+
     @Autowired
     public void setEcosContentApi(EcosContentApi ecosContentApi) {
         this.ecosContentApi = ecosContentApi;
@@ -303,7 +312,6 @@ public class RecordsDaoEndpoint {
     }
 
     @Autowired
-
     public void setEcosWebAppProps(EcosWebAppProps ecosWebAppProps) {
         this.ecosWebAppProps = ecosWebAppProps;
     }
