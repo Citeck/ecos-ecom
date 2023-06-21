@@ -12,8 +12,11 @@ import org.apache.camel.Handler;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.xerces.dom.DeferredElementNSImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import ru.citeck.ecos.commons.data.DataValue;
 import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
 import ru.citeck.ecos.ecom.service.documents.DocumentDao;
@@ -22,7 +25,7 @@ import ru.citeck.ecos.records3.RecordsService;
 import ru.citeck.ecos.records3.record.atts.dto.RecordAtts;
 import ru.citeck.ecos.webapp.api.content.EcosContentApi;
 import ru.citeck.ecos.webapp.api.entity.EntityRef;
-
+import ru.citeck.ecos.webapp.api.properties.EcosWebAppProps;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -42,6 +45,12 @@ public class RecordsDaoEndpoint {
     private EcosContentApi ecosContentApi;
     private RecordsService recordsService;
     private DocumentDao documentDao;
+    private Environment environment;
+
+    private EcosWebAppProps ecosWebAppProps;
+
+    @Value("${server.port}")
+    int port;
 
     /**
      * Source ID of target RecordDao
@@ -167,8 +176,31 @@ public class RecordsDaoEndpoint {
             if (!savedDocuments.isEmpty()){
                 savedDocuments.forEach(entityRef -> log.debug("Saved document {}", entityRef));
             }
+            if (resultRef.get().getSourceId().contains("sd-request-type")){
+                addDocsLinksForExistingRecord(savedDocuments, resultRef.get(), runAsUser);
+            }
         } catch (Exception e) {
             log.error("Failed to mutate record {}", recordAtts, e);
+        }
+    }
+
+    private void addDocsLinksForExistingRecord(List<EntityRef> savedDocuments, RecordRef ref, String runAsUser){
+        var links = savedDocuments.stream().map(unit -> ecosContentApi.getDownloadUrl(unit))
+                .map(unit -> getHost() + unit).toList();
+            String allLinks = StringUtils.join(links, ", ");
+
+        if (StringUtils.isBlank(runAsUser)) {
+            AtomicReference<DataValue> d = new AtomicReference<>();
+            AuthContext.runAsSystemJ(() -> d.set(recordsService.getAtt(ref, "letterContent")));
+            AuthContext.runAsSystemJ(() -> recordsService.mutateAtt(ref, "letterContent", d.get() + " " + allLinks));
+        } else {
+            var userAuthorities = AuthContext.runAsSystem(() ->
+                    recordsService.getAtt(runAsUser, "authorities.list[]").asList(String.class)
+            );
+            AtomicReference<DataValue> d = new AtomicReference<>();
+            AuthContext.runAsFullJ(runAsUser, userAuthorities, () -> d.set(recordsService.getAtt(ref, "letterContent")));
+            AuthContext.runAsFullJ(runAsUser, userAuthorities, () -> recordsService.mutateAtt(ref, "letterContent",
+                    d.get() + " " + allLinks));
         }
     }
 
@@ -251,6 +283,10 @@ public class RecordsDaoEndpoint {
         }
     }
 
+    private String getHost(){
+        return ecosWebAppProps.getWebUrl();
+    }
+
     @Autowired
     public void setEcosContentApi(EcosContentApi ecosContentApi) {
         this.ecosContentApi = ecosContentApi;
@@ -264,5 +300,11 @@ public class RecordsDaoEndpoint {
     @Autowired
     public void setDocumentDao(DocumentDao documentDao) {
         this.documentDao = documentDao;
+    }
+
+    @Autowired
+
+    public void setEcosWebAppProps(EcosWebAppProps ecosWebAppProps) {
+        this.ecosWebAppProps = ecosWebAppProps;
     }
 }
