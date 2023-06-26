@@ -12,16 +12,17 @@ import org.apache.camel.Handler;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.xerces.dom.DeferredElementNSImpl;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import ru.citeck.ecos.commons.data.DataValue;
 import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
+import ru.citeck.ecos.context.lib.auth.AuthUser;
+import ru.citeck.ecos.context.lib.auth.data.AuthData;
+import ru.citeck.ecos.context.lib.auth.data.SimpleAuthData;
 import ru.citeck.ecos.ecom.service.documents.DocumentDao;
 import ru.citeck.ecos.records2.RecordRef;
 import ru.citeck.ecos.records3.RecordsService;
@@ -51,9 +52,6 @@ public class RecordsDaoEndpoint {
     private Environment environment;
 
     private EcosWebAppProps ecosWebAppProps;
-
-    @Value("${server.port}")
-    int port;
 
     /**
      * Source ID of target RecordDao
@@ -159,50 +157,35 @@ public class RecordsDaoEndpoint {
     }
 
     private void mutateSafeAsUserOrSystem(RecordAtts recordAtts, String runAsUser, Exchange exchange) {
+        AuthData authData = getAuthDataForUser(runAsUser);
+        AtomicReference<RecordRef> resultRef = new AtomicReference<>(RecordRef.EMPTY);
         try {
-            AtomicReference<RecordRef> resultRef = new AtomicReference<>(RecordRef.EMPTY);
-
-            if (StringUtils.isBlank(runAsUser)) {
-                AuthContext.runAsSystemJ(() -> resultRef.set(recordsService.mutate(recordAtts)));
-            } else {
-                var userAuthorities = AuthContext.runAsSystem(() ->
-                        recordsService.getAtt(runAsUser, "authorities.list[]").asList(String.class)
-                );
-
-                AuthContext.runAsFullJ(runAsUser, userAuthorities, () -> resultRef.set(
-                        recordsService.mutate(recordAtts)
-                ));
-            }
-
-            log.debug("Mutated {}", resultRef.get());
-            List<EntityRef> savedDocuments = documentDao.saveDocumentsForSDRecord(exchange, resultRef.get());
-            if (!savedDocuments.isEmpty()){
-                savedDocuments.forEach(entityRef -> log.debug("Saved document {}", entityRef));
-            }
-            if (resultRef.get().getSourceId().contains("sd-request-type")){
-                addDocsLinksForExistingRecord(savedDocuments, resultRef.get(), runAsUser);
-            }
-        } catch (Exception e) {
+            AuthContext.runAsJ(authData, () -> resultRef.set(recordsService.mutate(recordAtts)));
+        }catch (Exception e) {
             log.error("Failed to mutate record {}", recordAtts, e);
+        }
+        log.debug("Mutated {}", resultRef.get());
+        List<EntityRef> savedDocuments = documentDao.saveDocumentsForSDRecord(exchange, resultRef.get());
+        if (!savedDocuments.isEmpty()) {
+            savedDocuments.forEach(entityRef -> log.debug("Saved document {}", entityRef));
+        }
+        if (resultRef.get().getSourceId().contains("sd-request-type")) {
+            addDocsLinksForExistingRecord(savedDocuments, resultRef.get(), authData);
         }
     }
 
-    private void addDocsLinksForExistingRecord(List<EntityRef> savedDocuments, RecordRef ref, String runAsUser){
+    private void addDocsLinksForExistingRecord(List<EntityRef> savedDocuments, RecordRef ref, AuthData authData) {
         var links = savedDocuments.stream().map(unit -> ecosContentApi.getDownloadUrl(unit))
                 .map(unit -> getHost() + unit).toList();
-            String allLinks = StringUtils.join(links, ", ");
+        String allLinks = StringUtils.join(links, ", ");
+        AtomicReference<DataValue> content = new AtomicReference<>();
+        try {
+            AuthContext.runAsJ(authData, () -> content.set(recordsService.getAtt(ref, "letterContent")));
+            AuthContext.runAsJ(authData, () -> recordsService
+                    .mutateAtt(ref, "letterContent", removeImageTag(content.get().asText()) + " " + allLinks));
 
-        if (StringUtils.isBlank(runAsUser)) {
-            AtomicReference<DataValue> content = new AtomicReference<>();
-            AuthContext.runAsSystemJ(() -> content.set(recordsService.getAtt(ref, "letterContent")));
-            AuthContext.runAsSystemJ(() -> recordsService.mutateAtt(ref, "letterContent", removeImageTag(content.get().asText()) + " " + allLinks));
-        } else {
-            var userAuthorities = AuthContext.runAsSystem(() ->
-                    recordsService.getAtt(runAsUser, "authorities.list[]").asList(String.class)
-            );
-            AtomicReference<DataValue> content = new AtomicReference<>();
-            AuthContext.runAsFullJ(runAsUser, userAuthorities, () -> content.set(recordsService.getAtt(ref, "letterContent")));
-            AuthContext.runAsFullJ(runAsUser, userAuthorities, () -> recordsService.mutateAtt(ref, "letterContent", removeImageTag(content.get().asText()) + " " + allLinks));
+        } catch (Exception e) {
+            log.error("Failed to mutate record {}", content.get().asText(), e);
         }
     }
 
@@ -288,6 +271,18 @@ public class RecordsDaoEndpoint {
     private String getHost(){
         return ecosWebAppProps.getWebUrl();
     }
+
+    private AuthData getAuthDataForUser(String runAsUser) {
+        if (StringUtils.isBlank(runAsUser)) {
+            return new SimpleAuthData(AuthUser.SYSTEM, AuthContext.getSystemAuthorities());
+        } else {
+            List<String> authorities = AuthContext.runAsSystemJ(() ->
+                    recordsService.getAtt(runAsUser, "authorities.list[]").asList(String.class)
+            );
+            return new SimpleAuthData(runAsUser, authorities);
+        }
+    }
+
 
     private String removeImageTag(String text){
         if (text == null || text.isEmpty()) {
