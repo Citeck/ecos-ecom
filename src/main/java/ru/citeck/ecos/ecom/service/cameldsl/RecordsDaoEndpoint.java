@@ -45,12 +45,11 @@ public class RecordsDaoEndpoint {
      * Represents any value of property in transformation map
      */
     private static final String ANY_VALUE = "*";
+    private static final String LETTER_CONTENT_ATTRIBUTE = "letterContent";
 
     private EcosContentApi ecosContentApi;
     private RecordsService recordsService;
     private DocumentDao documentDao;
-    private Environment environment;
-
     private EcosWebAppProps ecosWebAppProps;
 
     /**
@@ -169,7 +168,7 @@ public class RecordsDaoEndpoint {
         if (!savedDocuments.isEmpty()) {
             savedDocuments.forEach(entityRef -> log.debug("Saved document {}", entityRef));
         }
-        if (resultRef.get().getSourceId().contains("sd-request-type")) {
+        if (resultRef.get().getSourceId().equals("sd-request-type")) {
             addDocsLinksForExistingRecord(savedDocuments, resultRef.get(), authData);
         }
     }
@@ -180,10 +179,10 @@ public class RecordsDaoEndpoint {
         String allLinks = StringUtils.join(links, ", ");
         AtomicReference<DataValue> content = new AtomicReference<>();
         try {
-            AuthContext.runAsJ(authData, () -> content.set(recordsService.getAtt(ref, "letterContent")));
-            AuthContext.runAsJ(authData, () -> recordsService
-                    .mutateAtt(ref, "letterContent", removeImageTag(content.get().asText()) + " " + allLinks));
-
+            AuthContext.runAsJ(authData, () -> {
+                content.set(recordsService.getAtt(ref, LETTER_CONTENT_ATTRIBUTE));
+                recordsService.mutateAtt(ref, LETTER_CONTENT_ATTRIBUTE, removeImageTag(content.get().asText()) + " " + allLinks);
+            });
         } catch (Exception e) {
             log.error("Failed to mutate record {}", content.get().asText(), e);
         }
