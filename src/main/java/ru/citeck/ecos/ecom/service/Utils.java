@@ -11,6 +11,27 @@ import java.util.function.Supplier;
 
 public class Utils {
 
+    public static boolean hasCriticalTagsInSubject(String subject, String tagsString) {
+        boolean hasCriticalTag = false;
+        if (StringUtils.isNotBlank(tagsString)) {
+            String[] subjectWords = subject.toLowerCase().split(" ");
+            String[] tags = tagsString.toLowerCase().split(",");
+
+            for (String tag : tags) {
+                for (String subjectWord : subjectWords) {
+                    if (tag.trim().equals(subjectWord.trim())) {
+                        hasCriticalTag = true;
+                        break;
+                    }
+                }
+                if (hasCriticalTag) {
+                    break;
+                }
+            }
+        }
+        return hasCriticalTag;
+    }
+
     public static boolean isEmptyRecordRef(RecordRef ref) {
         return RecordRef.isEmpty(ref) || StringUtils.isBlank(ref.getId());
     }
