@@ -18,7 +18,7 @@ public class DealDTO {
     private String comment;
     private Date dateReceived;
     private String status = "new";
-    private String source;
+    private String requestCategory;
     private String siteFrom;
     private String gaClientId;
     private String ymClientId;

@@ -4,11 +4,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
+import ru.citeck.ecos.context.lib.auth.AuthContext;
 import ru.citeck.ecos.ecom.dto.DealDTO;
 import ru.citeck.ecos.ecom.dto.MailDTO;
+import ru.citeck.ecos.records2.predicate.PredicateService;
+import ru.citeck.ecos.records2.predicate.model.Predicates;
+import ru.citeck.ecos.records3.RecordsService;
+import ru.citeck.ecos.records3.record.dao.query.dto.query.RecordsQuery;
+import ru.citeck.ecos.webapp.api.constants.AppName;
+import ru.citeck.ecos.webapp.api.entity.EntityRef;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,6 +42,10 @@ public class CreateDealProcessor implements Processor {
     private static Pattern DEAL_SITE_FROM;
     private static Pattern GA_CLIENT_ID;
     private static Pattern YM_CLIENT_ID;
+
+    private static final String REQUEST_CATEGORY_SK = "deal-request-category";
+
+    private RecordsService recordsService;
 
     private CreateDealProcessor(@Value("${mail.deal.pattern.from}") final String dealFrom,
                                 @Value("${mail.deal.pattern.company}") final String dealCompany,
@@ -74,10 +86,14 @@ public class CreateDealProcessor implements Processor {
         deal.setComment(parseDeal(content, DEAL_COMMENT, 1));
         deal.setSiteFrom(parseDeal(content, DEAL_SITE_FROM, 0));
         deal.setDateReceived(mail.getDate());
-        deal.setSource(mail.getKind());
         deal.setEmessage(mail.getContent());
         deal.setGaClientId(parseDeal(content, GA_CLIENT_ID, 0));
         deal.setYmClientId(parseDeal(content, YM_CLIENT_ID, 0));
+
+        EntityRef requestCategory = getRequestCategoryByType(mail.getKind());
+        if (requestCategory != null) {
+            deal.setRequestCategory(requestCategory.getAsString());
+        }
 
         if (exchange.getProperty("subject").equals("deal"))
             deal.setCreatedAutomatically(true);
@@ -98,4 +114,18 @@ public class CreateDealProcessor implements Processor {
         }
     }
 
+    private EntityRef getRequestCategoryByType(String type) {
+        RecordsQuery query = RecordsQuery.create()
+                .withSourceId(AppName.EMODEL + "/" + REQUEST_CATEGORY_SK)
+                .withLanguage(PredicateService.LANGUAGE_PREDICATE)
+                .withQuery(Predicates.eq("type", type))
+                .build();
+
+        return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
+    }
+
+    @Autowired
+    public void setRecordsService(RecordsService recordsService) {
+        this.recordsService = recordsService;
+    }
 }

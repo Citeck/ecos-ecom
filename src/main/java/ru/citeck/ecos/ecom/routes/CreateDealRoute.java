@@ -30,7 +30,7 @@ public class CreateDealRoute extends RouteBuilder {
         map.put("dateReceived", "dateReceived");
         map.put("comment", "description");
         map.put("status", "_status");
-        map.put("source", "source");
+        map.put("requestCategory", "requestCategory");
         map.put("siteFrom", "siteFrom");
         map.put("emessage", "emessage");
         map.put("gaClientId", "ga_client_id");

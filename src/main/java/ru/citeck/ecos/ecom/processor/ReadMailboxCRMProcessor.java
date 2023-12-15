@@ -20,9 +20,11 @@ import java.io.UnsupportedEncodingException;
 public class ReadMailboxCRMProcessor implements Processor {
 
     @Value("${mail.deal.subject.consult}")
-    private String dealSubjectConsult;
-    @Value("${mail.deal.subject.demo}")
-    private String dealSubjectDemo;
+    private String[] dealSubjectsConsult;
+    @Value("${mail.deal.subject.demonstration}")
+    private String[] dealSubjectsDemonstration;
+    @Value("${mail.deal.subject.demo-access}")
+    private String dealSubjectDemoAccess;
     @Value("${mail.deal.subject.community}")
     private String dealSubjectCommunity;
     @Value("${mail.deal.subject.price}")
@@ -51,20 +53,32 @@ public class ReadMailboxCRMProcessor implements Processor {
         exchange.setProperty("subject", "deal");
         exchange.getIn().setBody(mail);
 
-        if (mail.getSubject().contains(dealSubjectConsult))
-            mail.setKind("consult");
-        else if (mail.getSubject().contains(dealSubjectCommunity))
-            mail.setKind("community");
-        else if (mail.getSubject().contains(dealSubjectPrice))
-            mail.setKind("price");
-        else if (mail.getSubject().contains(dealSubjectDemo))
-            mail.setKind("demo");
-        else if (mail.getSubject().contains(dealSubjectCloud))
-            mail.setKind("cloud");
-        else {
-            mail.setKind("other");
-            exchange.setProperty("subject", "other");
-            //exchange.getIn().setBody(mail.toMap());
+        for (String dealSubject : dealSubjectsConsult) {
+            if (mail.getSubject().contains(dealSubject)) {
+                mail.setKind("consult");
+            }
+        }
+        if (mail.getKind() == null) {
+            for (String dealSubject : dealSubjectsDemonstration) {
+                if (mail.getSubject().contains(dealSubject)) {
+                    mail.setKind("demonstration");
+                }
+            }
+        }
+        if (mail.getKind() == null) {
+            if (mail.getSubject().contains(dealSubjectCommunity))
+                mail.setKind("community");
+            else if (mail.getSubject().contains(dealSubjectPrice))
+                mail.setKind("price");
+            else if (mail.getSubject().contains(dealSubjectDemoAccess))
+                mail.setKind("demo-access");
+            else if (mail.getSubject().contains(dealSubjectCloud))
+                mail.setKind("cloud");
+            else {
+                mail.setKind("other");
+                exchange.setProperty("subject", "other");
+                //exchange.getIn().setBody(mail.toMap());
+            }
         }
     }
 
