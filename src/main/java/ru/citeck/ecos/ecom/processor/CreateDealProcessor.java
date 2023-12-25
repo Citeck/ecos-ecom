@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
+import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
 import ru.citeck.ecos.ecom.dto.DealDTO;
 import ru.citeck.ecos.ecom.dto.MailDTO;
@@ -18,6 +19,8 @@ import ru.citeck.ecos.records3.record.dao.query.dto.query.RecordsQuery;
 import ru.citeck.ecos.webapp.api.constants.AppName;
 import ru.citeck.ecos.webapp.api.entity.EntityRef;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,6 +36,10 @@ public class CreateDealProcessor implements Processor {
             //Pattern.compile("(?m)(?<=Компания:).*$");
     private static Pattern DEAL_FIO;
             //Pattern.compile("(?m)(?<=ФИО:).*$");
+    private static Pattern DEAL_POSITION;
+            //Pattern.compile("(?m)(?<=Должность:).*$");
+    private static Pattern DEAL_DEPARTMENT;
+            //Pattern.compile("(?m)(?<=Департамент:).*$");
     private static Pattern DEAL_PHONE;
             //Pattern.compile("(?m)(?<=Телефон:).*$");
     private static Pattern DEAL_EMAIL;
@@ -43,7 +50,15 @@ public class CreateDealProcessor implements Processor {
     private static Pattern GA_CLIENT_ID;
     private static Pattern YM_CLIENT_ID;
 
+    private static final String CONTACT_FIO_KEY = "fio";
+    private static final String CONTACT_POSITION_KEY = "position";
+    private static final String CONTACT_DEPARTMENT_KEY = "department";
+    private static final String CONTACT_PHONE_KEY = "phone";
+    private static final String CONTACT_EMAIL_KEY = "email";
+    private static final String CONTACT_MAIN_KEY = "main";
+
     private static final String REQUEST_CATEGORY_SK = "deal-request-category";
+    private static final String REQUEST_COUNTERPARTY_SK = "ecos-counterparty";
 
     private RecordsService recordsService;
 
@@ -51,6 +66,8 @@ public class CreateDealProcessor implements Processor {
                                 @Value("${mail.deal.pattern.company}") final String dealCompany,
                                 @Value("${mail.deal.pattern.subject}") final String dealSubject,
                                 @Value("${mail.deal.pattern.fio}") final String dealFio,
+                                @Value("${mail.deal.pattern.position}") final String dealPosition,
+                                @Value("${mail.deal.pattern.department}") final String dealDepartment,
                                 @Value("${mail.deal.pattern.phone}") final String dealPhone,
                                 @Value("${mail.deal.pattern.email}") final String dealEmail,
                                 @Value("${mail.deal.pattern.comment}") final String dealComment,
@@ -61,6 +78,8 @@ public class CreateDealProcessor implements Processor {
         DEAL_COMPANY =  Pattern.compile(dealCompany);
         DEAL_SUBJECT =  Pattern.compile(dealSubject);
         DEAL_FIO =  Pattern.compile(dealFio);
+        DEAL_POSITION = Pattern.compile(dealPosition);
+        DEAL_DEPARTMENT = Pattern.compile(dealDepartment);
         DEAL_PHONE =  Pattern.compile(dealPhone);
         DEAL_EMAIL =  Pattern.compile(dealEmail);
         DEAL_COMMENT =  Pattern.compile(dealComment);
@@ -79,16 +98,38 @@ public class CreateDealProcessor implements Processor {
         deal.setFromAddress(mail.getFromAddress());
         deal.setFrom(parseDeal(content, DEAL_FROM, 0));
         deal.setSubject(parseDeal(content, DEAL_SUBJECT, 0));
-        deal.setCompany(parseDeal(content, DEAL_COMPANY, 0));
-        deal.setFio(parseDeal(content, DEAL_FIO, 0));
-        deal.setPhone(parseDeal(content, DEAL_PHONE, 0));
-        deal.setEmail(parseDeal(content, DEAL_EMAIL, 0));
         deal.setComment(parseDeal(content, DEAL_COMMENT, 1));
         deal.setSiteFrom(parseDeal(content, DEAL_SITE_FROM, 0));
         deal.setDateReceived(mail.getDate());
         deal.setEmessage(mail.getContent());
         deal.setGaClientId(parseDeal(content, GA_CLIENT_ID, 0));
         deal.setYmClientId(parseDeal(content, YM_CLIENT_ID, 0));
+
+        String company = parseDeal(content, DEAL_COMPANY, 0);
+        deal.setCompany(company);
+
+        List<ObjectData> contacts = new ArrayList<>();
+        EntityRef counterparty = getCounterpartyByName(company);
+        if (counterparty != null) {
+            deal.setCounterparty(counterparty.getAsString());
+            ObjectData contact = AuthContext.runAsSystem(() -> getContactFromCounterparty(counterparty));
+            contacts.add(contact);
+        }
+
+        ObjectData contact = ObjectData.create();
+        String fio = parseDeal(content, DEAL_FIO, 0);
+        if (StringUtils.isNotBlank(fio)) {
+            contact.set(CONTACT_FIO_KEY, fio);
+        } else {
+            contact.set(CONTACT_FIO_KEY, deal.getFrom());
+        }
+        contact.set(CONTACT_POSITION_KEY, parseDeal(content, DEAL_POSITION, 0));
+        contact.set(CONTACT_DEPARTMENT_KEY, parseDeal(content, DEAL_DEPARTMENT, 0));
+        contact.set(CONTACT_PHONE_KEY, parseDeal(content, DEAL_PHONE, 0));
+        contact.set(CONTACT_EMAIL_KEY, parseDeal(content, DEAL_EMAIL, 0));
+        contact.set(CONTACT_MAIN_KEY, true);
+        contacts.add(contact);
+        deal.setContacts(contacts);
 
         EntityRef requestCategory = getRequestCategoryByType(mail.getKind());
         if (requestCategory != null) {
@@ -122,6 +163,25 @@ public class CreateDealProcessor implements Processor {
                 .build();
 
         return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
+    }
+
+    private EntityRef getCounterpartyByName(String name) {
+        RecordsQuery query = RecordsQuery.create()
+                .withSourceId(AppName.EMODEL + "/" + REQUEST_COUNTERPARTY_SK)
+                .withLanguage(PredicateService.LANGUAGE_PREDICATE)
+                .withQuery(Predicates.like("fullOrganizationName", "%" + name + "%"))
+                .build();
+
+        return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
+    }
+
+    private ObjectData getContactFromCounterparty(EntityRef counterparty) {
+        ObjectData contact = ObjectData.create();
+        contact.set(CONTACT_FIO_KEY, recordsService.getAtt(counterparty, "ceoName").asText());
+        contact.set(CONTACT_POSITION_KEY, "Генеральные директор");
+        contact.set(CONTACT_PHONE_KEY, recordsService.getAtt(counterparty, "phone").asText());
+        contact.set(CONTACT_EMAIL_KEY, recordsService.getAtt(counterparty, "email").asText());
+        return contact;
     }
 
     @Autowired
