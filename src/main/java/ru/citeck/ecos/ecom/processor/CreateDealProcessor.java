@@ -112,8 +112,7 @@ public class CreateDealProcessor implements Processor {
         EntityRef counterparty = getCounterpartyByName(company);
         if (counterparty != null) {
             deal.setCounterparty(counterparty.getAsString());
-            ObjectData contact = AuthContext.runAsSystem(() -> getContactFromCounterparty(counterparty));
-            contacts.add(contact);
+            contacts.addAll(getContactFromCounterparty(counterparty));
         }
 
         ObjectData contact = ObjectData.create();
@@ -127,8 +126,7 @@ public class CreateDealProcessor implements Processor {
         contact.set(CONTACT_DEPARTMENT_KEY, parseDeal(content, DEAL_DEPARTMENT, 0));
         contact.set(CONTACT_PHONE_KEY, parseDeal(content, DEAL_PHONE, 0));
         contact.set(CONTACT_EMAIL_KEY, parseDeal(content, DEAL_EMAIL, 0));
-        contact.set(CONTACT_MAIN_KEY, true);
-        contacts.add(contact);
+        checkAndAddContact(contacts, contact);
         deal.setContacts(contacts);
 
         EntityRef requestCategory = getRequestCategoryByType(mail.getKind());
@@ -155,6 +153,28 @@ public class CreateDealProcessor implements Processor {
         }
     }
 
+    private void checkAndAddContact(List<ObjectData> contacts, ObjectData contact) {
+        if (contacts.isEmpty()) {
+            contact.set(CONTACT_MAIN_KEY, true);
+            contacts.add(contact);
+            return;
+        }
+
+        boolean contactExist = contacts.stream()
+                .anyMatch(c -> c.get(CONTACT_FIO_KEY).equals(contact.get(CONTACT_FIO_KEY)) &&
+                        c.get(CONTACT_PHONE_KEY).equals(contact.get(CONTACT_PHONE_KEY)));
+        if (!contactExist) {
+            boolean hasMainContact = contacts.stream()
+                    .anyMatch(c -> c.get(CONTACT_MAIN_KEY).asBoolean());
+            if (hasMainContact) {
+                contact.set(CONTACT_MAIN_KEY, false);
+            } else {
+                contact.set(CONTACT_MAIN_KEY, true);
+            }
+            contacts.add(contact);
+        }
+    }
+
     private EntityRef getRequestCategoryByType(String type) {
         RecordsQuery query = RecordsQuery.create()
                 .withSourceId(AppName.EMODEL + "/" + REQUEST_CATEGORY_SK)
@@ -175,13 +195,9 @@ public class CreateDealProcessor implements Processor {
         return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
     }
 
-    private ObjectData getContactFromCounterparty(EntityRef counterparty) {
-        ObjectData contact = ObjectData.create();
-        contact.set(CONTACT_FIO_KEY, recordsService.getAtt(counterparty, "ceoName").asText());
-        contact.set(CONTACT_POSITION_KEY, "Генеральные директор");
-        contact.set(CONTACT_PHONE_KEY, recordsService.getAtt(counterparty, "phone").asText());
-        contact.set(CONTACT_EMAIL_KEY, recordsService.getAtt(counterparty, "email").asText());
-        return contact;
+    private List<ObjectData> getContactFromCounterparty(EntityRef counterparty) {
+        return AuthContext.runAsSystem(() ->
+                recordsService.getAtt(counterparty, "contacts[]?json").asList(ObjectData.class));
     }
 
     @Autowired
