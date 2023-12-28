@@ -5,16 +5,19 @@ server:
 mail:
   deal:
     subject:
-      consult: "Получить консультацию"
-      demo: "Заказать демонстрацию"
-      community: "Скачивание Citeck ECOS Community"
-      price: "Запрос стоимости"
-      cloud: "Заявка на демо-доступ к Citeck ECOS в облаке"
+      consult: Получить консультацию, Консультация на странице, Заявка на странице, Контактная форма
+      demonstration: Заказать демонстрацию, Запрос демонстрации
+      demo-access: Демо-доступ
+      community: Скачивание Citeck ECOS Community
+      price: Запрос стоимости
+      cloud: Заявка на демо-доступ к Citeck ECOS в облаке
     pattern:
       from: "(?m)(?<=От:).*$"
       company: "(?m)(?<=Компания:).*$"
       subject: "(?m)(?<=Тема:).*$"
       fio: "(?m)(?<=ФИО:).*$"
+      position: "(?m)(?<=Должность:).*$"
+      department: "(?m)(?<=Департамент:).*$"
       phone: "(?m)(?<=Телефон:).*$"
       email: "(?m)(?<=E-mail:).*$"
       siteFrom: "(?m)(?<=Страница перехода -).*$"
