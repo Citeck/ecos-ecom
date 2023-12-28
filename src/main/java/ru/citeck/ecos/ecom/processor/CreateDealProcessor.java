@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static ru.citeck.ecos.ecom.processor.ReadMailboxCRMProcessor.EMAIL_KIND;
+import static ru.citeck.ecos.ecom.processor.ReadMailboxCRMProcessor.OTHER_KIND;
+
 @PropertySource(ignoreResourceNotFound = true, value = "classpath:application.yml")
 @Slf4j
 @Component
@@ -50,12 +53,12 @@ public class CreateDealProcessor implements Processor {
     private static Pattern GA_CLIENT_ID;
     private static Pattern YM_CLIENT_ID;
 
-    private static final String CONTACT_FIO_KEY = "fio";
-    private static final String CONTACT_POSITION_KEY = "position";
-    private static final String CONTACT_DEPARTMENT_KEY = "department";
-    private static final String CONTACT_PHONE_KEY = "phone";
-    private static final String CONTACT_EMAIL_KEY = "email";
-    private static final String CONTACT_MAIN_KEY = "main";
+    private static final String CONTACT_FIO_KEY = "contactFio";
+    private static final String CONTACT_POSITION_KEY = "contactPosition";
+    private static final String CONTACT_DEPARTMENT_KEY = "contactDepartment";
+    private static final String CONTACT_PHONE_KEY = "contactPhone";
+    private static final String CONTACT_EMAIL_KEY = "contactEmail";
+    private static final String CONTACT_MAIN_KEY = "contactMain";
 
     private static final String REQUEST_CATEGORY_SK = "deal-request-category";
     private static final String REQUEST_COUNTERPARTY_SK = "ecos-counterparty";
@@ -106,30 +109,43 @@ public class CreateDealProcessor implements Processor {
         deal.setYmClientId(parseDeal(content, YM_CLIENT_ID, 0));
 
         String company = parseDeal(content, DEAL_COMPANY, 0);
-        deal.setCompany(company);
-
         List<ObjectData> contacts = new ArrayList<>();
-        EntityRef counterparty = getCounterpartyByName(company);
-        if (counterparty != null) {
-            deal.setCounterparty(counterparty.getAsString());
-            contacts.addAll(getContactFromCounterparty(counterparty));
+        if (StringUtils.isNotBlank(company)) {
+            EntityRef counterparty = getCounterpartyByName(company);
+            if (counterparty != null) {
+                deal.setCounterparty(counterparty.getAsString());
+                contacts.addAll(getContactFromCounterparty(counterparty));
+            } else {
+                deal.setCompany(company);
+            }
         }
 
         ObjectData contact = ObjectData.create();
-        String fio = parseDeal(content, DEAL_FIO, 0);
-        if (StringUtils.isNotBlank(fio)) {
-            contact.set(CONTACT_FIO_KEY, fio);
+        String contactFio = parseDeal(content, DEAL_FIO, 0);
+        if (StringUtils.isNotBlank(contactFio)) {
+            contact.set(CONTACT_FIO_KEY, contactFio);
         } else {
             contact.set(CONTACT_FIO_KEY, deal.getFrom());
         }
+
+        String contactEmail = parseDeal(content, DEAL_EMAIL, 0);
+        if (StringUtils.isNotBlank(contactEmail)) {
+            contact.set(CONTACT_EMAIL_KEY, contactEmail);
+        } else {
+            contact.set(CONTACT_EMAIL_KEY, deal.getFromAddress());
+        }
+
         contact.set(CONTACT_POSITION_KEY, parseDeal(content, DEAL_POSITION, 0));
         contact.set(CONTACT_DEPARTMENT_KEY, parseDeal(content, DEAL_DEPARTMENT, 0));
         contact.set(CONTACT_PHONE_KEY, parseDeal(content, DEAL_PHONE, 0));
-        contact.set(CONTACT_EMAIL_KEY, parseDeal(content, DEAL_EMAIL, 0));
         checkAndAddContact(contacts, contact);
         deal.setContacts(contacts);
 
-        EntityRef requestCategory = getRequestCategoryByType(mail.getKind());
+        String kind = mail.getKind();
+        if (StringUtils.isBlank(deal.getYmClientId()) && OTHER_KIND.equals(kind)) {
+            kind = EMAIL_KIND;
+        }
+        EntityRef requestCategory = getRequestCategoryByType(kind);
         if (requestCategory != null) {
             deal.setRequestCategory(requestCategory.getAsString());
         }
