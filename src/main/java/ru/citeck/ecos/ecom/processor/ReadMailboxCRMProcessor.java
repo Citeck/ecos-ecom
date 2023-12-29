@@ -20,15 +20,26 @@ import java.io.UnsupportedEncodingException;
 public class ReadMailboxCRMProcessor implements Processor {
 
     @Value("${mail.deal.subject.consult}")
-    private String dealSubjectConsult;
-    @Value("${mail.deal.subject.demo}")
-    private String dealSubjectDemo;
+    private String[] dealSubjectsConsult;
+    @Value("${mail.deal.subject.demonstration}")
+    private String[] dealSubjectsDemonstration;
+    @Value("${mail.deal.subject.demo-access}")
+    private String dealSubjectDemoAccess;
     @Value("${mail.deal.subject.community}")
     private String dealSubjectCommunity;
     @Value("${mail.deal.subject.price}")
     private String dealSubjectPrice;
     @Value("${mail.deal.subject.cloud}")
     private String dealSubjectCloud;
+
+    public static final String CONSULT_KIND = "consult";
+    public static final String DEMONSTRATION_KIND = "demonstration";
+    public static final String COMMUNITY_KIND = "community";
+    public static final String PRICE_KIND = "price";
+    public static final String DEMO_ACCESS_KIND = "demo-access";
+    public static final String CLOUD_KIND = "cloud";
+    public static final String OTHER_KIND = "other";
+    public static final String EMAIL_KIND = "email";
 
     @Override
     public void process(Exchange exchange) throws Exception {
@@ -51,20 +62,32 @@ public class ReadMailboxCRMProcessor implements Processor {
         exchange.setProperty("subject", "deal");
         exchange.getIn().setBody(mail);
 
-        if (mail.getSubject().contains(dealSubjectConsult))
-            mail.setKind("consult");
-        else if (mail.getSubject().contains(dealSubjectCommunity))
-            mail.setKind("community");
-        else if (mail.getSubject().contains(dealSubjectPrice))
-            mail.setKind("price");
-        else if (mail.getSubject().contains(dealSubjectDemo))
-            mail.setKind("demo");
-        else if (mail.getSubject().contains(dealSubjectCloud))
-            mail.setKind("cloud");
-        else {
-            mail.setKind("other");
-            exchange.setProperty("subject", "other");
-            //exchange.getIn().setBody(mail.toMap());
+        for (String dealSubject : dealSubjectsConsult) {
+            if (mail.getSubject().contains(dealSubject)) {
+                mail.setKind(CONSULT_KIND);
+            }
+        }
+        if (mail.getKind() == null) {
+            for (String dealSubject : dealSubjectsDemonstration) {
+                if (mail.getSubject().contains(dealSubject)) {
+                    mail.setKind(DEMONSTRATION_KIND);
+                }
+            }
+        }
+        if (mail.getKind() == null) {
+            if (mail.getSubject().contains(dealSubjectCommunity))
+                mail.setKind(COMMUNITY_KIND);
+            else if (mail.getSubject().contains(dealSubjectPrice))
+                mail.setKind(PRICE_KIND);
+            else if (mail.getSubject().contains(dealSubjectDemoAccess))
+                mail.setKind(DEMO_ACCESS_KIND);
+            else if (mail.getSubject().contains(dealSubjectCloud))
+                mail.setKind(CLOUD_KIND);
+            else {
+                mail.setKind(OTHER_KIND);
+                exchange.setProperty("subject", "other");
+                //exchange.getIn().setBody(mail.toMap());
+            }
         }
     }
 

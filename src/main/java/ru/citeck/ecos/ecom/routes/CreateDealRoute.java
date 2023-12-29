@@ -23,20 +23,19 @@ public class CreateDealRoute extends RouteBuilder {
         //recordsDaoEndpoint.setSourceId("deal");
         Map<String, String> map = new HashMap<String, String>();
         map.put("fromAddress", "siteEmail");
-        map.put("email", "email");
         map.put("company", "company");
-        map.put("fio", "fio");
-        map.put("phone", "phone");
+        map.put("counterparty", "counterparty");
         map.put("dateReceived", "dateReceived");
         map.put("comment", "description");
         map.put("status", "_status");
-        map.put("source", "source");
+        map.put("requestCategory", "requestCategory");
         map.put("siteFrom", "siteFrom");
         map.put("emessage", "emessage");
         map.put("gaClientId", "ga_client_id");
         map.put("ymClientId", "ym_client_id");
         map.put("ymClientId", "ym_client_id");
         map.put("createdAutomatically", "createdAutomatically");
+        map.put("contacts", "contacts");
         //recordsDaoEndpoint.setColumnMap(map);
         from("direct:createDeal")
                 .setHeader("recordsDaoColumnMap", constant(map))

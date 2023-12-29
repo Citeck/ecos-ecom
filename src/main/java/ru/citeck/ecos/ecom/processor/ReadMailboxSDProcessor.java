@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import ru.citeck.ecos.config.lib.consumer.bean.EcosConfig;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
 import ru.citeck.ecos.ecom.dto.MailDTO;
+import ru.citeck.ecos.ecom.service.Utils;
 import ru.citeck.ecos.ecom.service.cameldsl.MailBodyExtractor;
 import ru.citeck.ecos.ecom.service.documents.DocumentDao;
 import ru.citeck.ecos.records2.RecordRef;
@@ -25,8 +26,10 @@ import ru.citeck.ecos.webapp.api.constants.AppName;
 import ru.citeck.ecos.webapp.api.entity.EntityRef;
 
 import javax.mail.internet.MimeUtility;
-import java.io.*;
-import java.util.*;
+import java.io.UnsupportedEncodingException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 @PropertySource(ignoreResourceNotFound = true, value = "classpath:application.yml")
@@ -51,6 +54,9 @@ public class ReadMailboxSDProcessor implements Processor {
 
     @EcosConfig("app/service-desk$default-client")
     private EntityRef defaultClient = EntityRef.EMPTY;
+
+    @EcosConfig("app/service-desk$critical-tags")
+    private String tagsString = StringUtils.EMPTY;
 
     private RecordsService recordsService;
     private DocumentDao documentDao;
@@ -77,6 +83,8 @@ public class ReadMailboxSDProcessor implements Processor {
 
         mail.setSubject(decode(message.getHeader(MAIL_SUBJECT, String.class)));
         mail.setDate(message.getHeader(MAIL_DATE, String.class));
+
+        boolean hasCriticalTag = Utils.hasCriticalTagsInSubject(mail.getSubject(), tagsString);
 
         String fromDomain = getEmailDomain(fromAddress);
         exchange.getIn().setHeader("fromDomain", fromDomain);
@@ -115,7 +123,7 @@ public class ReadMailboxSDProcessor implements Processor {
         }
 
         bodyMap.put("createdAutomatically", "true");
-        bodyMap.put("priority", "medium");
+        bodyMap.put("priority", hasCriticalTag ? "urgent" : "medium");
         bodyMap.put("letterContentWithoutTags", Jsoup.parse(mailText).text());
 
         exchange.getIn().setBody(bodyMap);
@@ -129,7 +137,7 @@ public class ReadMailboxSDProcessor implements Processor {
     }
 
     private static String decode(String value) {
-        if (value == null){
+        if (value == null) {
             return "";
         }
         try {
