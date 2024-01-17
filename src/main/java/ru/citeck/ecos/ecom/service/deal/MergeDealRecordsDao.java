@@ -36,6 +36,7 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
     private static final String COUNTERPARTY_ATT = "counterparty";
     private static final String SITE_FROM_ATT = "siteFrom";
     private static final String REQUEST_CATEGORY_ATT = "requestCategory";
+    private static final String REQUEST_SOURCE_ATT = "requestSource";
     private static final String EMESSAGE_ATT = "emessage";
     private static final String GA_CLIENT_ID_ATT = "ga_client_id";
     private static final String YM_CLIENT_ID_ATT = "ym_client_id";
@@ -69,6 +70,7 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
         mergeAtt(mergeInfo, YM_CLIENT_ID_ATT, mergedAtts);
         mergeCounterparty(mergeInfo, mergedAtts);
         mergeRequestCategory(mergeInfo, mergedAtts);
+        mergeRequestSource(mergeInfo, mergedAtts);
         mergeContacts(mergeInfo, mergedAtts);
 
         RecordAtts recordAtts = new RecordAtts();
@@ -96,6 +98,10 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
 
     private void mergeRequestCategory(MergeInfo mergeInfo, ObjectData mergedAtts) {
         mergeAtt(mergeInfo, REQUEST_CATEGORY_ATT + "?id", mergedAtts);
+    }
+
+    private void mergeRequestSource(MergeInfo mergeInfo, ObjectData mergedAtts) {
+        mergeAtt(mergeInfo, REQUEST_SOURCE_ATT + "?id", mergedAtts);
     }
 
     private void mergeContacts(MergeInfo mergeInfo, ObjectData mergedAtts) {
@@ -135,22 +141,22 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
                 .asList(AttInfo.class);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("<p dir=\"ltr\"><span>Сделка объединена успешно.</span></p>");
-        sb.append("<p dir=\"ltr\"><br></p>");
+        sb.append("<p><span>Сделка объединена успешно.</span></p>");
+        sb.append("<p><br></p>");
         for (AttInfo attInfo : attsInfo) {
             if (CONTACTS_ATT.equals(attInfo.getId())) {
                 appendContacts(sb, attInfo, mergeInfo);
                 continue;
             }
 
-            sb.append("<p dir=\"ltr\"><span>");
+            sb.append("<p><span>");
             appendAttNames(sb, attInfo);
 
             String attValue = recordsService.getAtt(mergeInfo.getMergeFrom(), attInfo.getId()).asText();
             sb.append(": ").append(attValue);
             sb.append("</span></p>");
         }
-        sb.append("<p dir=\"ltr\"><br></p>");
+        sb.append("<p><br></p>");
 
         RecordAtts recordAtts = new RecordAtts();
         recordAtts.setId("emodel/comment@");
@@ -172,27 +178,40 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
     }
 
     private void appendContacts(StringBuilder sb, AttInfo attInfo, MergeInfo mergeInfo) {
-        sb.append("<p dir=\"ltr\"><span>");
+        sb.append("<p><span>");
         appendAttNames(sb, attInfo);
         sb.append(": ").append("</span></p>");
-        sb.append("<p dir=\"ltr\"><br></p>");
+        sb.append("<p><br></p>");
+
+        sb.append("<table><colgroup>");
+        sb.append("<col>".repeat(7));
+        sb.append("</colgroup>");
+
+        sb.append("<tbody>");
+        sb.append("<tr>");
+        sb.append("<th><p><span>Контакт/Contact</span></p></th>");
+        sb.append("<th><p><span>ФИО/Full name</span></p></th>");
+        sb.append("<th><p><span>Должность/Position</span></p></th>");
+        sb.append("<th><p><span>Департамент/Department</span></p></th>");
+        sb.append("<th><p><span>Телефон/Phone</span></p></th>");
+        sb.append("<th><p><span>E-mail</span></p></th>");
+        sb.append("<th><p><span>Комментарий/Comment</span></p></th>");
+        sb.append("</tr>");
 
         List<ContactData> contacts = getContacts(mergeInfo.getMergeFrom());
-        for (ContactData contact : contacts) {
-            sb.append("<p dir=\"ltr\"><span>").append("ФИО/Full name: ").append(contact.getContactFio())
-                    .append("</span></p>");
-            sb.append("<p dir=\"ltr\"><span>").append("Должность/Position: ").append(contact.getContactPosition())
-                    .append("</span></p>");
-            sb.append("<p dir=\"ltr\"><span>").append("Департамент/Department: ").append(contact.getContactDepartment())
-                    .append("</span></p>");
-            sb.append("<p dir=\"ltr\"><span>").append("Телефон/Phone: ").append(contact.getContactPhone())
-                    .append("</span></p>");
-            sb.append("<p dir=\"ltr\"><span>").append("E-mail: ").append(contact.getContactEmail())
-                    .append("</span></p>");
-            sb.append("<p dir=\"ltr\"><span>").append("Комментарий/Comment: ").append(contact.getContactComment())
-                    .append("</span></p>");
-            sb.append("<p dir=\"ltr\"><br></p>");
+        for (int i = 0; i < contacts.size(); i++) {
+            ContactData contact = contacts.get(i);
+            sb.append("<tr>");
+            sb.append("<th><p><span>").append(i + 1).append("</span></p></th>");
+            sb.append("<th><p><span>").append(contact.getContactFio()).append("</span></p></th>");
+            sb.append("<th><p><span>").append(contact.getContactPosition()).append("</span></p></th>");
+            sb.append("<th><p><span>").append(contact.getContactDepartment()).append("</span></p></th>");
+            sb.append("<th><p><span>").append(contact.getContactPhone()).append("</span></p></th>");
+            sb.append("<th><p><span>").append(contact.getContactEmail()).append("</span></p></th>");
+            sb.append("<th><p><span>").append(contact.getContactComment()).append("</span></p></th>");
+            sb.append("</tr>");
         }
+        sb.append("</tbody></table>");
     }
 
     private List<ContactData> getContacts(EntityRef dealRef) {
