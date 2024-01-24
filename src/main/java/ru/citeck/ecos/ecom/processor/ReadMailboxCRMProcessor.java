@@ -96,6 +96,10 @@ public class ReadMailboxCRMProcessor implements Processor {
     }
 
     public static String decode(String value) {
+        if (value == null) {
+            return "";
+        }
+
         try {
             return MimeUtility.decodeText(value);
         }
