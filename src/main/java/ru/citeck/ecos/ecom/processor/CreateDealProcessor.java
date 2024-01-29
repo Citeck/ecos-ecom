@@ -15,6 +15,7 @@ import ru.citeck.ecos.ecom.dto.MailDTO;
 import ru.citeck.ecos.records2.predicate.PredicateService;
 import ru.citeck.ecos.records2.predicate.model.Predicates;
 import ru.citeck.ecos.records3.RecordsService;
+import ru.citeck.ecos.records3.record.atts.dto.RecordAtts;
 import ru.citeck.ecos.records3.record.dao.query.dto.query.RecordsQuery;
 import ru.citeck.ecos.webapp.api.constants.AppName;
 import ru.citeck.ecos.webapp.api.entity.EntityRef;
@@ -109,11 +110,13 @@ public class CreateDealProcessor implements Processor {
         deal.setYmClientId(parseDeal(content, YM_CLIENT_ID, 0));
 
         String company = parseDeal(content, DEAL_COMPANY, 0);
+        EntityRef counterparty = null;
         List<ObjectData> contacts = new ArrayList<>();
         if (StringUtils.isNotBlank(company)) {
-            EntityRef counterparty = getCounterpartyByName(company);
+            counterparty = getCounterpartyByName(company);
             if (counterparty != null) {
                 deal.setCounterparty(counterparty.getAsString());
+                deal.setCompany(getNameFromCounterparty(counterparty));
                 contacts.addAll(getContactFromCounterparty(counterparty));
             } else {
                 deal.setCompany(company);
@@ -138,7 +141,10 @@ public class CreateDealProcessor implements Processor {
         contact.set(CONTACT_POSITION_KEY, parseDeal(content, DEAL_POSITION, 0));
         contact.set(CONTACT_DEPARTMENT_KEY, parseDeal(content, DEAL_DEPARTMENT, 0));
         contact.set(CONTACT_PHONE_KEY, parseDeal(content, DEAL_PHONE, 0));
-        checkAndAddContact(contacts, contact);
+        boolean isContactAdded = checkAndAddContact(contacts, contact);
+        if (counterparty != null && isContactAdded) {
+            updateCounterpartyContacts(counterparty, contacts);
+        }
         deal.setContacts(contacts);
 
         String kind = mail.getKind();
@@ -169,16 +175,17 @@ public class CreateDealProcessor implements Processor {
         }
     }
 
-    private void checkAndAddContact(List<ObjectData> contacts, ObjectData contact) {
+    private boolean checkAndAddContact(List<ObjectData> contacts, ObjectData contact) {
         if (contacts.isEmpty()) {
             contact.set(CONTACT_MAIN_KEY, true);
             contacts.add(contact);
-            return;
+            return true;
         }
 
         boolean contactExist = contacts.stream()
                 .anyMatch(c -> c.get(CONTACT_FIO_KEY).equals(contact.get(CONTACT_FIO_KEY)) &&
-                        c.get(CONTACT_PHONE_KEY).equals(contact.get(CONTACT_PHONE_KEY)));
+                        c.get(CONTACT_PHONE_KEY).equals(contact.get(CONTACT_PHONE_KEY)) &&
+                        c.get(CONTACT_EMAIL_KEY).equals(contact.get(CONTACT_EMAIL_KEY)));
         if (!contactExist) {
             boolean hasMainContact = contacts.stream()
                     .anyMatch(c -> c.get(CONTACT_MAIN_KEY).asBoolean());
@@ -188,7 +195,16 @@ public class CreateDealProcessor implements Processor {
                 contact.set(CONTACT_MAIN_KEY, true);
             }
             contacts.add(contact);
+            return true;
         }
+        return false;
+    }
+
+    private void updateCounterpartyContacts(EntityRef counterparty, List<ObjectData> contacts) {
+        RecordAtts recordAtts = new RecordAtts();
+        recordAtts.setId(counterparty);
+        recordAtts.setAtt("contacts", contacts);
+        AuthContext.runAsSystem(() -> recordsService.mutate(recordAtts));
     }
 
     private EntityRef getRequestCategoryByType(String type) {
@@ -214,6 +230,10 @@ public class CreateDealProcessor implements Processor {
     private List<ObjectData> getContactFromCounterparty(EntityRef counterparty) {
         return AuthContext.runAsSystem(() ->
                 recordsService.getAtt(counterparty, "contacts[]?json").asList(ObjectData.class));
+    }
+
+    private String getNameFromCounterparty(EntityRef counterparty) {
+        return AuthContext.runAsSystem(() -> recordsService.getAtt(counterparty, "fullOrganizationName").asText());
     }
 
     @Autowired

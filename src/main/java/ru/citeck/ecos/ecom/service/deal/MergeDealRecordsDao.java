@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.citeck.ecos.commons.data.DataValue;
 import ru.citeck.ecos.commons.data.ObjectData;
+import ru.citeck.ecos.commons.utils.StringUtils;
 import ru.citeck.ecos.ecom.service.deal.dto.AttInfo;
 import ru.citeck.ecos.ecom.service.deal.dto.ContactData;
 import ru.citeck.ecos.ecom.service.deal.dto.MergeInfo;
@@ -21,10 +22,15 @@ import ru.citeck.ecos.records3.record.dao.query.dto.res.RecsQueryRes;
 import ru.citeck.ecos.webapp.api.constants.AppName;
 import ru.citeck.ecos.webapp.api.entity.EntityRef;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 @Slf4j
@@ -43,6 +49,10 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
     private static final String CONTACTS_ATT = "contacts";
 
     private static final String COMMENT_SK = "comment";
+
+    private static final Pattern COMMENT_MERGED_MARK = Pattern.compile("Комментрий от [0-9]{2}.[0-9]{2}.[0-9]{4} из сделки [0-9]+");
+    private static final DateTimeFormatter COMMENT_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+            .withZone(ZoneId.systemDefault());
 
     private final RecordsService recordsService;
 
@@ -121,6 +131,15 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
         RecsQueryRes<RecordRef> commentsFrom = getCommentsByRecord(mergeInfo.getMergeFrom().getAsString());
         for (RecordRef comment : commentsFrom.getRecords()) {
             RecordAtts recordAtts = new RecordAtts();
+            String text = recordsService.getAtt(comment, "text").asText();
+            Matcher matcher = COMMENT_MERGED_MARK.matcher(text);
+            if (!matcher.find()) {
+                String number = recordsService.getAtt(mergeInfo.getMergeFrom(), "number").asText();
+                Instant created = recordsService.getAtt(comment, "_created").getAsInstant();
+                String createdDate = created != null ? COMMENT_DATE_FORMATTER.format(created) : "";
+                recordAtts.setAtt("text", addToCommentMergedMark(text, createdDate, number));
+            }
+
             recordAtts.setId(comment);
             recordAtts.setAtt("record", mergeInfo.getMergeIn().getAsString());
             recordsService.mutate(recordAtts);
@@ -136,6 +155,12 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
         return recordsService.query(query);
     }
 
+    private String addToCommentMergedMark(String text, String createdDate, String number) {
+        return text + "<p><br></p><p><br></p><p><span>" +
+                "Комментрий от " + createdDate + " из сделки " + number +
+                "</span></p>";
+    }
+
     private void addMergeResultComment(MergeInfo mergeInfo) {
         List<AttInfo> attsInfo = recordsService.getAtt(mergeInfo.getMergeFrom(), "_type.model.attributes[]?json")
                 .asList(AttInfo.class);
@@ -149,12 +174,13 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
                 continue;
             }
 
-            sb.append("<p><span>");
-            appendAttNames(sb, attInfo);
-
             String attValue = recordsService.getAtt(mergeInfo.getMergeFrom(), attInfo.getId()).asText();
-            sb.append(": ").append(attValue);
-            sb.append("</span></p>");
+            if (StringUtils.isNotBlank(attValue)) {
+                sb.append("<p><span>");
+                appendAttNames(sb, attInfo);
+                sb.append(": ").append(attValue);
+                sb.append("</span></p>");
+            }
         }
         sb.append("<p><br></p>");
 
