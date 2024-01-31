@@ -205,6 +205,11 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
     }
 
     private void appendContacts(StringBuilder sb, AttInfo attInfo, MergeInfo mergeInfo) {
+        List<ContactData> contacts = getContacts(mergeInfo.getMergeFrom());
+        if (contacts.isEmpty()) {
+            return;
+        }
+
         sb.append("<p><span>");
         appendAttNames(sb, attInfo);
         sb.append(": ").append("</span></p>");
@@ -225,7 +230,6 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
         sb.append("<th><p><span>Комментарий/Comment</span></p></th>");
         sb.append("</tr>");
 
-        List<ContactData> contacts = getContacts(mergeInfo.getMergeFrom());
         for (int i = 0; i < contacts.size(); i++) {
             ContactData contact = contacts.get(i);
             sb.append("<tr>");
