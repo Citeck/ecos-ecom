@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import ru.citeck.ecos.commons.data.DataValue;
 import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.commons.utils.StringUtils;
+import ru.citeck.ecos.context.lib.auth.AuthContext;
 import ru.citeck.ecos.ecom.service.deal.dto.AttInfo;
 import ru.citeck.ecos.ecom.service.deal.dto.ContactData;
 import ru.citeck.ecos.ecom.service.deal.dto.MergeInfo;
@@ -88,7 +89,7 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
         recordAtts.setAtts(mergedAtts);
         recordsService.mutate(recordAtts);
 
-        mergeComments(mergeInfo);
+        AuthContext.runAsSystemJ(() -> mergeComments(mergeInfo));
         addMergeResultComment(mergeInfo);
         recordsService.delete(mergeInfo.getMergeFrom());
         return null;
