@@ -53,16 +53,19 @@ abstract class SdRequestTestBase {
 
         recordsService = RecordsServiceFactory().recordsServiceV1
         recordsService.register(InMemDataRecordsDao(CLIENTS_SRC_ID))
-        recordsService.create(CLIENTS_SRC_ID, mapOf(
-            "name" to "TestClient",
-            "emailDomain" to "test.com",
-            "users" to listOf(
-                mapOf(
-                    "id" to "test-user",
-                    "email" to "petr@test.com"
-                )
-            )
-        ))
+        recordsService.create(
+            CLIENTS_SRC_ID,
+            mapOf(
+                "name" to "TestClient",
+                "emailDomain" to "test.com",
+                "users" to listOf(
+                    mapOf(
+                        "id" to "test-user",
+                        "email" to "petr@test.com",
+                    ),
+                ),
+            ),
+        )
         recordsService.register(InMemDataRecordsDao(SD_REQ_SRC_ID))
 
         val documentsDao = Mockito.mock(DocumentDao::class.java)
@@ -99,12 +102,11 @@ abstract class SdRequestTestBase {
     fun getSdRequests(): List<SdRequestData> {
         return recordsService.query(
             RecordsQuery.create { withSourceId(SD_REQ_SRC_ID) },
-            SdRequestData::class.java
+            SdRequestData::class.java,
         ).getRecords()
     }
 
     fun sendEmail(subject: String, body: String, attachments: List<ByteArray>) {
-
         val prop = Properties()
         prop["mail.smtp.auth"] = false
         prop["mail.smtp.host"] = greenMail.smtp.bindTo
@@ -143,6 +145,6 @@ abstract class SdRequestTestBase {
         val author: String,
         val createdAutomatically: Boolean,
         val priority: String,
-        val letterContent: String
+        val letterContent: String,
     )
 }

@@ -7,7 +7,6 @@ class SdRequestSmtpTest : SdRequestTestBase() {
 
     @Test
     fun test() {
-
         sendEmail("test", "abcd", emptyList())
 
         Thread.sleep(3000)
@@ -16,7 +15,7 @@ class SdRequestSmtpTest : SdRequestTestBase() {
 
         assertThat(sdRequests).hasSize(1)
         assertThat(sdRequests[0].letterTopic).isEqualTo("test")
-        assertThat(sdRequests[0].initiator).isEqualTo("test-user")
+        assertThat(sdRequests[0].initiator).isEqualTo("emodel/clients-type@test-user")
         assertThat(sdRequests[0].author).isEqualTo("Petr Ivanov <petr@test.com>")
         assertThat(sdRequests[0].createdAutomatically).isEqualTo(true)
         assertThat(sdRequests[0].priority).isEqualTo("medium")
