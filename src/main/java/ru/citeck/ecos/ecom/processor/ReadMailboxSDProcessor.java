@@ -16,7 +16,6 @@ import ru.citeck.ecos.ecom.dto.MailDTO;
 import ru.citeck.ecos.ecom.service.Utils;
 import ru.citeck.ecos.ecom.service.cameldsl.MailBodyExtractor;
 import ru.citeck.ecos.ecom.service.documents.DocumentDao;
-import ru.citeck.ecos.records2.RecordRef;
 import ru.citeck.ecos.records2.predicate.PredicateService;
 import ru.citeck.ecos.records2.predicate.model.Predicates;
 import ru.citeck.ecos.records3.RecordsService;
@@ -151,7 +150,7 @@ public class ReadMailboxSDProcessor implements Processor {
         return fromEmail.substring(fromEmail.indexOf("@") + 1);
     }
 
-    private RecordRef getClientByEmailDomain(String emailDomain) {
+    private EntityRef getClientByEmailDomain(String emailDomain) {
         RecordsQuery query = RecordsQuery.create()
                 .withSourceId(AppName.EMODEL + "/" + CLIENT_SK)
                 .withLanguage(PredicateService.LANGUAGE_PREDICATE)
@@ -179,7 +178,7 @@ public class ReadMailboxSDProcessor implements Processor {
         return null;
     }
 
-    public RecordRef getUserByEmail(String email) {
+    public EntityRef getUserByEmail(String email) {
         RecordsQuery query = RecordsQuery.create()
                 .withSourceId(AppName.EMODEL + "/" + PERSON_SK)
                 .withLanguage(PredicateService.LANGUAGE_PREDICATE)

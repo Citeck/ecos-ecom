@@ -12,7 +12,6 @@ import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
 import ru.citeck.ecos.ecom.dto.DealDTO;
 import ru.citeck.ecos.ecom.dto.MailDTO;
-import ru.citeck.ecos.records2.RecordRef;
 import ru.citeck.ecos.records2.predicate.PredicateService;
 import ru.citeck.ecos.records2.predicate.model.Predicates;
 import ru.citeck.ecos.records3.RecordsService;
@@ -154,7 +153,7 @@ public class CreateDealProcessor implements Processor {
         String kind = mail.getKind();
         if (StringUtils.isBlank(deal.getYmClientId()) && OTHER_KIND.equals(kind)) {
             kind = EMAIL_KIND;
-            RecordRef requestSource = getMailRequestSource();
+            EntityRef requestSource = getMailRequestSource();
             deal.setRequestSource(requestSource.getAsString());
         }
         EntityRef requestCategory = getRequestCategoryByType(kind);
@@ -223,7 +222,7 @@ public class CreateDealProcessor implements Processor {
         return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
     }
 
-    private RecordRef getMailRequestSource() {
+    private EntityRef getMailRequestSource() {
         RecordsQuery query = RecordsQuery.create()
                 .withSourceId(AppName.EMODEL + "/" + REQUEST_SOURCE_SK)
                 .withLanguage(PredicateService.LANGUAGE_PREDICATE)

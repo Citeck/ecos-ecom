@@ -9,7 +9,6 @@ import ru.citeck.ecos.commons.utils.StringUtils;
 import ru.citeck.ecos.ecom.service.deal.dto.DealData;
 import ru.citeck.ecos.endpoints.lib.EcosEndpoint;
 import ru.citeck.ecos.endpoints.lib.EcosEndpoints;
-import ru.citeck.ecos.records2.RecordRef;
 import ru.citeck.ecos.records2.predicate.PredicateService;
 import ru.citeck.ecos.records2.predicate.model.Predicates;
 import ru.citeck.ecos.records3.RecordsService;
@@ -87,7 +86,7 @@ public class DealSyncRequestSourceJob {
         }
 
         int excludedDealsCount = 0;
-        List<RecordRef> deals = getDeals(excludedDealsCount);
+        List<EntityRef> deals = getDeals(excludedDealsCount);
         int iter = 0;
         while (!deals.isEmpty() && iter < MAX_ITERATION) {
             for (EntityRef deal : deals) {
@@ -119,7 +118,7 @@ public class DealSyncRequestSourceJob {
         }
     }
 
-    private List<RecordRef> getDeals(int skipCount) {
+    private List<EntityRef> getDeals(int skipCount) {
         RecordsQuery query = RecordsQuery.create()
                 .withSourceId(AppName.EMODEL + "/" + DEAL_SK)
                 .withLanguage(PredicateService.LANGUAGE_PREDICATE)
