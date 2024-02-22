@@ -24,3 +24,8 @@ mail:
       comment: "Комментарий:([\\s\\S\\n]+)Страница перехода"
       gaClientId: "(?m)(?<=GA_client_ID:).*$"
       ymClientId: "(?m)(?<=YM_client_ID:).*$"
+
+ecos:
+  deal:
+    ymSyncCronExpression: ${YM_SYNC_CRON_EXPRESSION:0 0 */6 * * *}
+    ymSyncYearsSearchInterval: ${YM_SYNC_YEARS_SEARCH_INTERVAL:2}
