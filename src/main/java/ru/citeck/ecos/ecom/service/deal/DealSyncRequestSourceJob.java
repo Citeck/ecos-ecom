@@ -51,8 +51,8 @@ public class DealSyncRequestSourceJob {
     public DealSyncRequestSourceJob(EcosTaskSchedulerApi ecosTaskScheduler,
                                     EcosAppLockService ecosAppLockService,
                                     RecordsService recordsService,
-                                    @Value("${ecos.deal.ymSyncCronExpression}") String ymSyncCronExpression,
-                                    @Value("${ecos.deal.ymSyncYearsSearchInterval}") Integer ymSyncYearsSearchInterval) {
+                                    @Value("${ecos.deal.ym-sync.cron-expression}") String ymSyncCronExpression,
+                                    @Value("${ecos.deal.ym-sync.search-interval}") Integer ymSyncYearsSearchInterval) {
         this.ecosTaskScheduler = ecosTaskScheduler;
         this.ecosAppLockService = ecosAppLockService;
         this.recordsService = recordsService;

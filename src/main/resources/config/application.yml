@@ -27,5 +27,6 @@ mail:
 
 ecos:
   deal:
-    ymSyncCronExpression: ${YM_SYNC_CRON_EXPRESSION:0 0 */6 * * *}
-    ymSyncYearsSearchInterval: ${YM_SYNC_YEARS_SEARCH_INTERVAL:2}
+    ym-sync:
+      cron-expression: 0 0 */6 * * *
+      search-interval: 2
