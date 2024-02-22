@@ -40,6 +40,8 @@ public class DealSyncRequestSourceJob {
     private static final String YM_CLIENT_ID_ATT = "ym_client_id";
     private static final String REQUEST_SOURCE_ATT = "requestSource";
 
+    private static final int MAX_ITERATION = 10_000;
+
     private final EcosTaskSchedulerApi ecosTaskScheduler;
     private final EcosAppLockService ecosAppLockService;
     private final RecordsService recordsService;
@@ -86,7 +88,8 @@ public class DealSyncRequestSourceJob {
 
         int excludedDealsCount = 0;
         List<RecordRef> deals = getDeals(excludedDealsCount);
-        while (!deals.isEmpty()) {
+        int iter = 0;
+        while (!deals.isEmpty() && iter < MAX_ITERATION) {
             for (EntityRef deal : deals) {
                 DealData dealData = getDealData(deal);
                 String requestSourceType = null;
@@ -112,6 +115,7 @@ public class DealSyncRequestSourceJob {
                 }
             }
             deals = getDeals(excludedDealsCount);
+            iter++;
         }
     }
 
