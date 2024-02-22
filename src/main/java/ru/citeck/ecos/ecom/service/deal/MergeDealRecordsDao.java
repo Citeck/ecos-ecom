@@ -12,7 +12,6 @@ import ru.citeck.ecos.context.lib.auth.AuthContext;
 import ru.citeck.ecos.ecom.service.deal.dto.AttInfo;
 import ru.citeck.ecos.ecom.service.deal.dto.ContactData;
 import ru.citeck.ecos.ecom.service.deal.dto.MergeInfo;
-import ru.citeck.ecos.records2.RecordRef;
 import ru.citeck.ecos.records2.predicate.PredicateService;
 import ru.citeck.ecos.records2.predicate.model.Predicates;
 import ru.citeck.ecos.records3.RecordsService;
@@ -129,8 +128,8 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
     }
 
     private void mergeComments(MergeInfo mergeInfo) {
-        RecsQueryRes<RecordRef> commentsFrom = getCommentsByRecord(mergeInfo.getMergeFrom().getAsString());
-        for (RecordRef comment : commentsFrom.getRecords()) {
+        RecsQueryRes<EntityRef> commentsFrom = getCommentsByRecord(mergeInfo.getMergeFrom().getAsString());
+        for (EntityRef comment : commentsFrom.getRecords()) {
             RecordAtts recordAtts = new RecordAtts();
             String text = recordsService.getAtt(comment, "text").asText();
             Matcher matcher = COMMENT_MERGED_MARK.matcher(text);
@@ -147,7 +146,7 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
         }
     }
 
-    private RecsQueryRes<RecordRef> getCommentsByRecord(String recordId) {
+    private RecsQueryRes<EntityRef> getCommentsByRecord(String recordId) {
         RecordsQuery query = RecordsQuery.create()
                 .withSourceId(AppName.EMODEL + "/" + COMMENT_SK)
                 .withLanguage(PredicateService.LANGUAGE_PREDICATE)

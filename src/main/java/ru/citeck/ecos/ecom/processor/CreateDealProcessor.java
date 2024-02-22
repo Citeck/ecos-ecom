@@ -64,6 +64,9 @@ public class CreateDealProcessor implements Processor {
     private static final String REQUEST_CATEGORY_SK = "deal-request-category";
     private static final String REQUEST_COUNTERPARTY_SK = "ecos-counterparty";
 
+    public static final String REQUEST_SOURCE_SK = "deal-request-source";
+    private static final String MAIL_REQUEST_SOURCE_TYPE = "mail";
+
     private RecordsService recordsService;
 
     private CreateDealProcessor(@Value("${mail.deal.pattern.from}") final String dealFrom,
@@ -150,6 +153,8 @@ public class CreateDealProcessor implements Processor {
         String kind = mail.getKind();
         if (StringUtils.isBlank(deal.getYmClientId()) && OTHER_KIND.equals(kind)) {
             kind = EMAIL_KIND;
+            EntityRef requestSource = getMailRequestSource();
+            deal.setRequestSource(requestSource.getAsString());
         }
         EntityRef requestCategory = getRequestCategoryByType(kind);
         if (requestCategory != null) {
@@ -214,6 +219,15 @@ public class CreateDealProcessor implements Processor {
                 .withQuery(Predicates.eq("type", type))
                 .build();
 
+        return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
+    }
+
+    private EntityRef getMailRequestSource() {
+        RecordsQuery query = RecordsQuery.create()
+                .withSourceId(AppName.EMODEL + "/" + REQUEST_SOURCE_SK)
+                .withLanguage(PredicateService.LANGUAGE_PREDICATE)
+                .withQuery(Predicates.eq("type", MAIL_REQUEST_SOURCE_TYPE))
+                .build();
         return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
     }
 

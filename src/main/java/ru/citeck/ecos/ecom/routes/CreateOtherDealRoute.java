@@ -29,6 +29,7 @@ public class CreateOtherDealRoute extends RouteBuilder {
         map.put("content", "description");
         map.put("status", "_status");
         map.put("requestCategory", "requestCategory");
+        map.put("requestSource", "requestSource");
         map.put("emessage", "emessage");
         map.put("comment", "description");
         map.put("siteFrom", "siteFrom");

@@ -3,13 +3,13 @@ package ru.citeck.ecos.ecom.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.citeck.ecos.records2.RecordRef;
 import ru.citeck.ecos.records2.predicate.PredicateService;
 import ru.citeck.ecos.records2.predicate.model.Predicates;
 import ru.citeck.ecos.records2.rest.RemoteRecordsUtils;
 import ru.citeck.ecos.records3.RecordsService;
 import ru.citeck.ecos.records3.record.atts.dto.RecordAtts;
 import ru.citeck.ecos.records3.record.dao.query.dto.query.RecordsQuery;
+import ru.citeck.ecos.webapp.api.entity.EntityRef;
 
 @Slf4j
 @Service
@@ -36,7 +36,7 @@ public class EcosAuthorityProvider {
         return result;
     }
 
-    public RecordRef getUserRefByUserName(String user) {
+    public EntityRef getUserRefByUserName(String user) {
         //RecordRef peopleRecordRef = RecordRef.create(ALFRESCO_APP, PEOPLE_SK, phoneNumber);
 
         RecordsQuery query = RecordsQuery.create()
@@ -46,7 +46,7 @@ public class EcosAuthorityProvider {
                         Predicates.eq("id", user))
                 .build();
 
-        RecordRef result = RemoteRecordsUtils.runAsSystem(() -> recordsService.queryOne(query));
+        EntityRef result = RemoteRecordsUtils.runAsSystem(() -> recordsService.queryOne(query));
 
         return result;
     }
@@ -81,7 +81,7 @@ public class EcosAuthorityProvider {
                 .build();
         log.debug(userQuery.toString());
 
-        RecordRef userRecordRef = RemoteRecordsUtils.runAsSystem(() -> recordsService.queryOne(userQuery));
+        EntityRef userRecordRef = RemoteRecordsUtils.runAsSystem(() -> recordsService.queryOne(userQuery));
         log.debug(userRecordRef.toString());
 
         RecordAtts toMutate = new RecordAtts();

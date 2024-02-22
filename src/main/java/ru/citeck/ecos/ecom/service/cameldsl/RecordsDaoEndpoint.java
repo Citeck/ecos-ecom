@@ -14,7 +14,6 @@ import org.apache.xerces.dom.DeferredElementNSImpl;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import ru.citeck.ecos.commons.data.DataValue;
@@ -24,12 +23,12 @@ import ru.citeck.ecos.context.lib.auth.AuthUser;
 import ru.citeck.ecos.context.lib.auth.data.AuthData;
 import ru.citeck.ecos.context.lib.auth.data.SimpleAuthData;
 import ru.citeck.ecos.ecom.service.documents.DocumentDao;
-import ru.citeck.ecos.records2.RecordRef;
 import ru.citeck.ecos.records3.RecordsService;
 import ru.citeck.ecos.records3.record.atts.dto.RecordAtts;
 import ru.citeck.ecos.webapp.api.content.EcosContentApi;
 import ru.citeck.ecos.webapp.api.entity.EntityRef;
 import ru.citeck.ecos.webapp.api.properties.EcosWebAppProps;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -148,7 +147,7 @@ public class RecordsDaoEndpoint {
                 }
         );
 
-        RecordRef ref = RecordRef.create(appName, sourceId, "");
+        EntityRef ref = EntityRef.create(appName, sourceId, "");
         RecordAtts recordAtts = new RecordAtts(ref, targetAttributesData);
         log.debug("Record atts to mutate {}, as user {}", recordAtts, runAsUser);
 
@@ -157,7 +156,7 @@ public class RecordsDaoEndpoint {
 
     private void mutateSafeAsUserOrSystem(RecordAtts recordAtts, String runAsUser, Exchange exchange) {
         AuthData authData = getAuthDataForUser(runAsUser);
-        AtomicReference<RecordRef> resultRef = new AtomicReference<>(RecordRef.EMPTY);
+        AtomicReference<EntityRef> resultRef = new AtomicReference<>(EntityRef.EMPTY);
         try {
             AuthContext.runAsJ(authData, () -> resultRef.set(recordsService.mutate(recordAtts)));
         }catch (Exception e) {
@@ -173,7 +172,7 @@ public class RecordsDaoEndpoint {
         }
     }
 
-    private void addDocsLinksForExistingRecord(List<EntityRef> savedDocuments, RecordRef ref, AuthData authData) {
+    private void addDocsLinksForExistingRecord(List<EntityRef> savedDocuments, EntityRef ref, AuthData authData) {
         var links = savedDocuments.stream().map(unit -> ecosContentApi.getDownloadUrl(unit))
                 .map(unit -> getHost() + unit).toList();
         String allLinks = StringUtils.join(links, ", ");
