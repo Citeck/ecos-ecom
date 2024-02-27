@@ -99,9 +99,9 @@ public class DealSyncRequestSourceJob {
                 }
 
                 if (StringUtils.isNotBlank(requestSourceType)) {
-                    EntityRef requestSource = getRequestSourceByType(requestSourceType);
+                    EntityRef requestSource = getRequestSourceById(requestSourceType);
                     if (requestSource == null) {
-                        requestSource = getRequestSourceByType(OTHER_REQUEST_SOURCE_TYPE);
+                        requestSource = getRequestSourceById(OTHER_REQUEST_SOURCE_TYPE);
                         log.info("requestSource with type=" + requestSourceType + " does not exist. Set \"other\"");
                     }
                     RecordAtts recordAtts = new RecordAtts();
@@ -136,11 +136,11 @@ public class DealSyncRequestSourceJob {
         return recordsService.getAtts(deal, DealData.class);
     }
 
-    private EntityRef getRequestSourceByType(String type) {
+    private EntityRef getRequestSourceById(String id) {
         RecordsQuery query = RecordsQuery.create()
                 .withSourceId(AppName.EMODEL + "/" + REQUEST_SOURCE_SK)
                 .withLanguage(PredicateService.LANGUAGE_PREDICATE)
-                .withQuery(Predicates.eq("type", type))
+                .withQuery(Predicates.eq("id", id))
                 .build();
         return recordsService.queryOne(query);
     }
