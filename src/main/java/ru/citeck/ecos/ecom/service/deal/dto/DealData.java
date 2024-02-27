@@ -9,5 +9,6 @@ import java.time.Instant;
 public class DealData {
     @AttName("ym_client_id")
     private String ymClientId;
+    private Integer syncRequestSourceCount;
     private Instant dateReceived;
 }

@@ -3,7 +3,10 @@ package ru.citeck.ecos.ecom.service.deal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.commons.task.schedule.Schedules;
 import ru.citeck.ecos.commons.utils.StringUtils;
 import ru.citeck.ecos.ecom.service.deal.dto.DealData;
@@ -34,12 +37,15 @@ public class DealSyncRequestSourceJob {
 
     private static final String YM_API_ENDPOINT_ID = "yandex-metrika-api";
     private static final String DEAL_SK = "deal";
-    private static final String OTHER_REQUEST_SOURCE_TYPE = "other";
+    private static final EntityRef OTHER_REQUEST_SOURCE = EntityRef.create(AppName.EMODEL, REQUEST_SOURCE_SK, "other");
+    private static final EntityRef UNKNOWN_REQUEST_SOURCE = EntityRef.create(AppName.EMODEL, REQUEST_SOURCE_SK, "unknown");
 
     private static final String YM_CLIENT_ID_ATT = "ym_client_id";
     private static final String REQUEST_SOURCE_ATT = "requestSource";
+    private static final String SYNC_REQUEST_SOURCE_COUNT_ATT = "syncRequestSourceCount";
 
     private static final int MAX_ITERATION = 10_000;
+    private static final int MAX_SYNC_REQUEST_SOURCE_COUNT = 4;
 
     private final EcosTaskSchedulerApi ecosTaskScheduler;
     private final EcosAppLockService ecosAppLockService;
@@ -95,21 +101,38 @@ public class DealSyncRequestSourceJob {
                 try {
                     requestSourceType = yandexMetrikaClient.getFirstTrafficSource(endpoint, credentials, dealData);
                 } catch (Exception e) {
-                    logException("Error in yandexMetrikaClient process getFirstTrafficSource", e);
+                    if (e instanceof HttpClientErrorException &&
+                            HttpStatus.BAD_REQUEST.equals(((HttpClientErrorException) e).getStatusCode())) {
+                        logException("Error in yandexMetrikaClient process getFirstTrafficSource", e);
+                    } else {
+                        throw e;
+                    }
                 }
 
                 if (StringUtils.isNotBlank(requestSourceType)) {
-                    EntityRef requestSource = getRequestSourceByType(requestSourceType);
+                    EntityRef requestSource = getRequestSourceById(requestSourceType);
                     if (requestSource == null) {
-                        requestSource = getRequestSourceByType(OTHER_REQUEST_SOURCE_TYPE);
+                        requestSource = OTHER_REQUEST_SOURCE;
                         log.info("requestSource with type=" + requestSourceType + " does not exist. Set \"other\"");
                     }
-                    RecordAtts recordAtts = new RecordAtts();
-                    recordAtts.setId(deal);
-                    recordAtts.setAtt(REQUEST_SOURCE_ATT, requestSource);
-                    recordsService.mutate(recordAtts);
+                    updateRequestSoursForDeal(deal, requestSource);
                     log.info("Successful set requestSource=" + requestSourceType + " for deal=" + deal);
                 } else {
+                    Integer syncRequestSourceCount = dealData.getSyncRequestSourceCount();
+                    if (syncRequestSourceCount == null || syncRequestSourceCount == MAX_SYNC_REQUEST_SOURCE_COUNT) {
+                        syncRequestSourceCount = 0;
+                    }
+                    syncRequestSourceCount++;
+                    if (syncRequestSourceCount >= MAX_SYNC_REQUEST_SOURCE_COUNT) {
+                        ObjectData data = ObjectData.create();
+                        data.set(REQUEST_SOURCE_ATT, UNKNOWN_REQUEST_SOURCE);
+                        data.set(SYNC_REQUEST_SOURCE_COUNT_ATT, syncRequestSourceCount);
+                        updateDeal(deal, data);
+                        log.info("Sync attempt limit exceeded for deal=" + deal +
+                                " Set requestSource \"unknown\"");
+                    } else {
+                        updateSyncRequestSourceCountForDeal(deal, syncRequestSourceCount);
+                    }
                     excludedDealsCount++;
                 }
             }
@@ -136,13 +159,32 @@ public class DealSyncRequestSourceJob {
         return recordsService.getAtts(deal, DealData.class);
     }
 
-    private EntityRef getRequestSourceByType(String type) {
+    private EntityRef getRequestSourceById(String id) {
         RecordsQuery query = RecordsQuery.create()
                 .withSourceId(AppName.EMODEL + "/" + REQUEST_SOURCE_SK)
                 .withLanguage(PredicateService.LANGUAGE_PREDICATE)
-                .withQuery(Predicates.eq("type", type))
+                .withQuery(Predicates.eq("id", id))
                 .build();
         return recordsService.queryOne(query);
+    }
+
+    private void updateRequestSoursForDeal(EntityRef deal, EntityRef requestSource) {
+        ObjectData data = ObjectData.create();
+        data.set(REQUEST_SOURCE_ATT, requestSource);
+        updateDeal(deal, data);
+    }
+
+    private void updateSyncRequestSourceCountForDeal(EntityRef deal, Integer syncRequestSourceCount) {
+        ObjectData data = ObjectData.create();
+        data.set(SYNC_REQUEST_SOURCE_COUNT_ATT, syncRequestSourceCount);
+        updateDeal(deal, data);
+    }
+
+    private void updateDeal(EntityRef deal, ObjectData data) {
+        RecordAtts recordAtts = new RecordAtts();
+        recordAtts.setId(deal);
+        recordAtts.setAtts(data);
+        recordsService.mutate(recordAtts);
     }
 
     private void logException(String message, Exception e) {

@@ -156,7 +156,7 @@ public class CreateDealProcessor implements Processor {
             EntityRef requestSource = getMailRequestSource();
             deal.setRequestSource(requestSource.getAsString());
         }
-        EntityRef requestCategory = getRequestCategoryByType(kind);
+        EntityRef requestCategory = getRequestCategoryById(kind);
         if (requestCategory != null) {
             deal.setRequestCategory(requestCategory.getAsString());
         }
@@ -212,11 +212,11 @@ public class CreateDealProcessor implements Processor {
         AuthContext.runAsSystem(() -> recordsService.mutate(recordAtts));
     }
 
-    private EntityRef getRequestCategoryByType(String type) {
+    private EntityRef getRequestCategoryById(String id) {
         RecordsQuery query = RecordsQuery.create()
                 .withSourceId(AppName.EMODEL + "/" + REQUEST_CATEGORY_SK)
                 .withLanguage(PredicateService.LANGUAGE_PREDICATE)
-                .withQuery(Predicates.eq("type", type))
+                .withQuery(Predicates.eq("id", id))
                 .build();
 
         return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
@@ -226,7 +226,7 @@ public class CreateDealProcessor implements Processor {
         RecordsQuery query = RecordsQuery.create()
                 .withSourceId(AppName.EMODEL + "/" + REQUEST_SOURCE_SK)
                 .withLanguage(PredicateService.LANGUAGE_PREDICATE)
-                .withQuery(Predicates.eq("type", MAIL_REQUEST_SOURCE_TYPE))
+                .withQuery(Predicates.eq("id", MAIL_REQUEST_SOURCE_TYPE))
                 .build();
         return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
     }

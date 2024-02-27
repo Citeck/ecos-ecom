@@ -31,6 +31,8 @@ public class ReadMailboxCRMProcessor implements Processor {
     private String dealSubjectPrice;
     @Value("${mail.deal.subject.cloud}")
     private String dealSubjectCloud;
+    @Value("${mail.deal.subject.community-subscription}")
+    private String communitySubscription;
 
     public static final String CONSULT_KIND = "consult";
     public static final String DEMONSTRATION_KIND = "demonstration";
@@ -38,6 +40,7 @@ public class ReadMailboxCRMProcessor implements Processor {
     public static final String PRICE_KIND = "price";
     public static final String DEMO_ACCESS_KIND = "demo-access";
     public static final String CLOUD_KIND = "cloud";
+    public static final String COMMUNITY_SUBSCRIPTION_KIND = "community-subscription";
     public static final String OTHER_KIND = "other";
     public static final String EMAIL_KIND = "email";
 
@@ -83,6 +86,8 @@ public class ReadMailboxCRMProcessor implements Processor {
                 mail.setKind(DEMO_ACCESS_KIND);
             else if (mail.getSubject().contains(dealSubjectCloud))
                 mail.setKind(CLOUD_KIND);
+            else if (mail.getSubject().contains(communitySubscription))
+                mail.setKind(COMMUNITY_SUBSCRIPTION_KIND);
             else {
                 mail.setKind(OTHER_KIND);
                 exchange.setProperty("subject", "other");
