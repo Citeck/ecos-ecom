@@ -11,7 +11,7 @@ mail:
       community: Скачивание Citeck ECOS Community
       price: Запрос стоимости
       cloud: Заявка на демо-доступ к Citeck ECOS в облаке
-      subscription-com: Подписка на рассылку о Community
+      community-subscription: Подписка на рассылку о Community
     pattern:
       from: "(?m)(?<=От:).*$"
       company: "(?m)(?<=Компания:).*$"

@@ -3,12 +3,13 @@ package ru.citeck.ecos.ecom.service.deal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.commons.task.schedule.Schedules;
 import ru.citeck.ecos.commons.utils.StringUtils;
 import ru.citeck.ecos.ecom.service.deal.dto.DealData;
-import ru.citeck.ecos.ecom.service.deal.exception.YMTooManyRequestException;
 import ru.citeck.ecos.endpoints.lib.EcosEndpoint;
 import ru.citeck.ecos.endpoints.lib.EcosEndpoints;
 import ru.citeck.ecos.records2.predicate.PredicateService;
@@ -36,8 +37,8 @@ public class DealSyncRequestSourceJob {
 
     private static final String YM_API_ENDPOINT_ID = "yandex-metrika-api";
     private static final String DEAL_SK = "deal";
-    private static final String OTHER_REQUEST_SOURCE_TYPE = "other";
-    private static final String UNKNOWN_REQUEST_SOURCE_TYPE = "unknown";
+    private static final EntityRef OTHER_REQUEST_SOURCE = EntityRef.create(AppName.EMODEL, REQUEST_SOURCE_SK, "other");
+    private static final EntityRef UNKNOWN_REQUEST_SOURCE = EntityRef.create(AppName.EMODEL, REQUEST_SOURCE_SK, "unknown");
 
     private static final String YM_CLIENT_ID_ATT = "ym_client_id";
     private static final String REQUEST_SOURCE_ATT = "requestSource";
@@ -70,8 +71,7 @@ public class DealSyncRequestSourceJob {
     private void init() {
         ecosTaskScheduler.scheduleJ(
                 "DealSyncRequestSourceJob",
-                Schedules.fixedRate(Duration.ofMinutes(1)),
-//                Schedules.cron(cronSyncExpression),
+                Schedules.cron(cronSyncExpression),
                 () -> ecosAppLockService.doInSyncOrSkipJ("DealSyncRequestSourceJob",
                         Duration.ofSeconds(10), this::sync)
         );
@@ -101,16 +101,18 @@ public class DealSyncRequestSourceJob {
                 try {
                     requestSourceType = yandexMetrikaClient.getFirstTrafficSource(endpoint, credentials, dealData);
                 } catch (Exception e) {
-                    if (e instanceof YMTooManyRequestException) {
+                    if (e instanceof HttpClientErrorException &&
+                            HttpStatus.BAD_REQUEST.equals(((HttpClientErrorException) e).getStatusCode())) {
+                        logException("Error in yandexMetrikaClient process getFirstTrafficSource", e);
+                    } else {
                         throw e;
                     }
-                    logException("Error in yandexMetrikaClient process getFirstTrafficSource", e);
                 }
 
                 if (StringUtils.isNotBlank(requestSourceType)) {
                     EntityRef requestSource = getRequestSourceById(requestSourceType);
                     if (requestSource == null) {
-                        requestSource = getRequestSourceById(OTHER_REQUEST_SOURCE_TYPE);
+                        requestSource = OTHER_REQUEST_SOURCE;
                         log.info("requestSource with type=" + requestSourceType + " does not exist. Set \"other\"");
                     }
                     updateRequestSoursForDeal(deal, requestSource);
@@ -122,9 +124,8 @@ public class DealSyncRequestSourceJob {
                     }
                     syncRequestSourceCount++;
                     if (syncRequestSourceCount >= MAX_SYNC_REQUEST_SOURCE_COUNT) {
-                        EntityRef requestSource = getRequestSourceById(UNKNOWN_REQUEST_SOURCE_TYPE);
                         ObjectData data = ObjectData.create();
-                        data.set(REQUEST_SOURCE_ATT, requestSource);
+                        data.set(REQUEST_SOURCE_ATT, UNKNOWN_REQUEST_SOURCE);
                         data.set(SYNC_REQUEST_SOURCE_COUNT_ATT, syncRequestSourceCount);
                         updateDeal(deal, data);
                         log.info("Sync attempt limit exceeded for deal=" + deal +

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 import ru.citeck.ecos.ecom.service.deal.dto.DealData;
-import ru.citeck.ecos.ecom.service.deal.exception.YMTooManyRequestException;
 import ru.citeck.ecos.endpoints.lib.EcosEndpoint;
 import ru.citeck.ecos.secrets.lib.secret.EcosSecret;
 
@@ -40,8 +39,6 @@ public class YandexMetrikaClient {
         ResponseEntity<JsonNode> response = restTemplate.exchange(urlWithParams, HttpMethod.GET, requestEntity, JsonNode.class);
         if (HttpStatus.OK.equals(response.getStatusCode())) {
             return getFirstTrafficSourceId(response.getBody());
-        } else if (HttpStatus.TOO_MANY_REQUESTS.equals(response.getStatusCode())) {
-            throw new YMTooManyRequestException(response.toString());
         }
         return null;
     }
