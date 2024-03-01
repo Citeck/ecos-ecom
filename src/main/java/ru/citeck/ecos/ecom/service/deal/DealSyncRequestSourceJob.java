@@ -42,7 +42,7 @@ public class DealSyncRequestSourceJob {
 
     private static final String YM_CLIENT_ID_ATT = "ym_client_id";
     private static final String REQUEST_SOURCE_ATT = "requestSource";
-    private static final String SYNC_REQUEST_SOURCE_COUNT_ATT = "syncRequestSourceCount";
+    public static final String SYNC_REQUEST_SOURCE_COUNT_ATT = "syncRequestSourceCount";
 
     private static final int MAX_ITERATION = 10_000;
     private static final int MAX_SYNC_REQUEST_SOURCE_COUNT = 4;

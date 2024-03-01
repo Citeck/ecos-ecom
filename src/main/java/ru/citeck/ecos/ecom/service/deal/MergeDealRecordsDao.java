@@ -32,6 +32,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static ru.citeck.ecos.ecom.service.deal.DealSyncRequestSourceJob.SYNC_REQUEST_SOURCE_COUNT_ATT;
+
 @Component
 @Slf4j
 public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
@@ -70,6 +72,10 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
     @Nullable
     @Override
     public Object mutate(@NotNull MergeInfo mergeInfo) {
+        if (mergeInfo.getMergeFrom().equals(mergeInfo.getMergeIn())) {
+            throw new RuntimeException("Cannot merge the same deal=" + mergeInfo.getMergeFrom());
+        }
+
         ObjectData mergedAtts = ObjectData.create();
         mergeAtt(mergeInfo, AMOUNT_ATT, mergedAtts);
         mergeAtt(mergeInfo, DESCRIPTION_ATT, mergedAtts);
@@ -169,12 +175,16 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
         sb.append("<p><span>Сделка объединена успешно.</span></p>");
         sb.append("<p><br></p>");
         for (AttInfo attInfo : attsInfo) {
-            if (CONTACTS_ATT.equals(attInfo.getId())) {
+            String id = attInfo.getId();
+            if (SYNC_REQUEST_SOURCE_COUNT_ATT.equals(id)) {
+                continue;
+            }
+            if (CONTACTS_ATT.equals(id)) {
                 appendContacts(sb, attInfo, mergeInfo);
                 continue;
             }
 
-            String attValue = recordsService.getAtt(mergeInfo.getMergeFrom(), attInfo.getId()).asText();
+            String attValue = recordsService.getAtt(mergeInfo.getMergeFrom(), id).asText();
             if (StringUtils.isNotBlank(attValue)) {
                 sb.append("<p><span>");
                 appendAttNames(sb, attInfo);
