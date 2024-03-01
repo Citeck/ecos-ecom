@@ -73,7 +73,7 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
     @Override
     public Object mutate(@NotNull MergeInfo mergeInfo) {
         if (mergeInfo.getMergeFrom().equals(mergeInfo.getMergeIn())) {
-            throw new RuntimeException("Cannot merge the same deal");
+            throw new RuntimeException("Cannot merge the same deal=" + mergeInfo.getMergeFrom());
         }
 
         ObjectData mergedAtts = ObjectData.create();
