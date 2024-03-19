@@ -156,7 +156,7 @@ public class CreateDealProcessor implements Processor {
         deal.setContacts(contacts);
 
         String kind = mail.getKind();
-        if (StringUtils.isBlank(deal.getYmClientId()) && OTHER_KIND.equals(kind)) {
+        if (StringUtils.isBlank(deal.getYmClientId()) && StringUtils.isBlank(deal.getGaClientId())) {
             kind = EMAIL_KIND;
             EntityRef requestSource = getMailRequestSource();
             deal.setRequestSource(requestSource.getAsString());
