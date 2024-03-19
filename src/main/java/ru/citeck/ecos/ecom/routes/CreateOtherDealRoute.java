@@ -33,6 +33,7 @@ public class CreateOtherDealRoute extends RouteBuilder {
         map.put("emessage", "emessage");
         map.put("comment", "description");
         map.put("siteFrom", "siteFrom");
+        map.put("numberOfUsers", "numberOfUsers");
         map.put("gaClientId", "ga_client_id");
         map.put("ymClientId", "ym_client_id");
         map.put("createdAutomatically", "createdAutomatically");
