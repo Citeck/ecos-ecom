@@ -51,6 +51,8 @@ public class CreateDealProcessor implements Processor {
     private static Pattern DEAL_COMMENT;
             //Pattern.compile( "Комментарий:([\\s\\S\\n]+)Страница перехода");
     private static Pattern DEAL_SITE_FROM;
+            //Pattern.compile("(?m)(?<=Количества пользователей:).*$");
+    private static Pattern DEAL_NUMBER_OF_USERS;
     private static Pattern GA_CLIENT_ID;
     private static Pattern YM_CLIENT_ID;
 
@@ -79,6 +81,7 @@ public class CreateDealProcessor implements Processor {
                                 @Value("${mail.deal.pattern.email}") final String dealEmail,
                                 @Value("${mail.deal.pattern.comment}") final String dealComment,
                                 @Value("${mail.deal.pattern.siteFrom}") final String dealSiteFrom,
+                                @Value("${mail.deal.pattern.numberOfUsers}") final String dealNumberOfUsers,
                                 @Value("${mail.deal.pattern.gaClientId}") final String gaClientId,
                                 @Value("${mail.deal.pattern.ymClientId}") final String ymClientId) {
         DEAL_FROM =  Pattern.compile(dealFrom);
@@ -91,6 +94,7 @@ public class CreateDealProcessor implements Processor {
         DEAL_EMAIL =  Pattern.compile(dealEmail);
         DEAL_COMMENT =  Pattern.compile(dealComment);
         DEAL_SITE_FROM =  Pattern.compile(dealSiteFrom);
+        DEAL_NUMBER_OF_USERS = Pattern.compile(dealNumberOfUsers);
         GA_CLIENT_ID =  Pattern.compile(gaClientId);
         YM_CLIENT_ID =  Pattern.compile(ymClientId);
     }
@@ -107,6 +111,7 @@ public class CreateDealProcessor implements Processor {
         deal.setSubject(parseDeal(content, DEAL_SUBJECT, 0));
         deal.setComment(parseDeal(content, DEAL_COMMENT, 1));
         deal.setSiteFrom(parseDeal(content, DEAL_SITE_FROM, 0));
+        deal.setNumberOfUsers(parseDeal(content, DEAL_NUMBER_OF_USERS, 0));
         deal.setDateReceived(mail.getDate());
         deal.setEmessage(mail.getContent());
         deal.setGaClientId(parseDeal(content, GA_CLIENT_ID, 0));
@@ -151,7 +156,7 @@ public class CreateDealProcessor implements Processor {
         deal.setContacts(contacts);
 
         String kind = mail.getKind();
-        if (StringUtils.isBlank(deal.getYmClientId()) && OTHER_KIND.equals(kind)) {
+        if (StringUtils.isBlank(deal.getYmClientId()) && StringUtils.isBlank(deal.getGaClientId())) {
             kind = EMAIL_KIND;
             EntityRef requestSource = getMailRequestSource();
             deal.setRequestSource(requestSource.getAsString());
