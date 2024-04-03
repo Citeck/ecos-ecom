@@ -22,7 +22,7 @@ mail:
       phone: "(?m)(?<=Телефон:).*$"
       email: "(?m)(?<=E-mail:).*$"
       siteFrom: "(?m)(?<=Страница перехода -).*$"
-      numberOfUsers: "(?m)(?<=Количества пользователей:).*$"
+      numberOfUsers: "(?m)(?<=Количество пользователей:).*$"
       comment: "Комментарий:([\\s\\S\\n]+)Страница перехода"
       gaClientId: "(?m)(?<=GA_client_ID:).*$"
       ymClientId: "(?m)(?<=YM_client_ID:).*$"
