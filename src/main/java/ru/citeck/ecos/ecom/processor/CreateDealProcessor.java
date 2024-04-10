@@ -51,7 +51,7 @@ public class CreateDealProcessor implements Processor {
     private static Pattern DEAL_COMMENT;
             //Pattern.compile( "Комментарий:([\\s\\S\\n]+)Страница перехода");
     private static Pattern DEAL_SITE_FROM;
-            //Pattern.compile("(?m)(?<=Количества пользователей:).*$");
+            //Pattern.compile("(?m)(?<=Количество пользователей:).*$");
     private static Pattern DEAL_NUMBER_OF_USERS;
     private static Pattern GA_CLIENT_ID;
     private static Pattern YM_CLIENT_ID;
