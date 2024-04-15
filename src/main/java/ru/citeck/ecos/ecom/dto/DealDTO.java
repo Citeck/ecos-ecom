@@ -21,6 +21,7 @@ public class DealDTO {
     private String requestCategory;
     private String requestSource;
     private String siteFrom;
+    private String numberOfUsers;
     private String gaClientId;
     private String ymClientId;
     private String emessage;
