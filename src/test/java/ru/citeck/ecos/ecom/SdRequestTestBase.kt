@@ -38,7 +38,7 @@ abstract class SdRequestTestBase {
         private const val INBOX_EMAIL = "test@test.com"
 
         const val CLIENTS_SRC_ID = "emodel/clients-type"
-        const val SD_REQ_SRC_ID = "emodel/sd-request-type"
+        const val SD_REQ_SRC_ID = "emodel/task-tracker"
     }
 
     lateinit var greenMail: GreenMail

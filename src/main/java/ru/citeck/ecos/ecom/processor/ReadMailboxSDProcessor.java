@@ -204,10 +204,14 @@ public class ReadMailboxSDProcessor implements Processor {
             var sdNumber = Integer.parseInt(StringUtils.substringAfter(sdCode, "SD-"));
 
             RecordsQuery query = RecordsQuery.create()
-                    .withSourceId(AppName.EMODEL + "/" + "sd-request-type")
+                    .withSourceId(AppName.EMODEL + "/" + "task-tracker")
                     .withLanguage(PredicateService.LANGUAGE_PREDICATE)
                     .withQuery(
-                            Predicates.eq("_docNum", sdNumber))
+                            Predicates.and(
+                                    Predicates.eq("_docNum", sdNumber),
+                                    Predicates.eq("_type", "emodel/type@sd-request-type")
+                                    )
+                    )
                     .build();
 
             return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
