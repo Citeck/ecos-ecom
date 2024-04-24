@@ -29,7 +29,7 @@ public class CreateSDRoute extends RouteBuilder {
 
         from("direct:" + ID)
                 .setHeader("recordsDaoColumnMap", constant(map))
-                .bean(RecordsDaoEndpoint.class, "mutate(*, emodel, sd-request-type)");
+                .bean(RecordsDaoEndpoint.class, "mutate(*, emodel, task-tracker)");
     }
 }
 
