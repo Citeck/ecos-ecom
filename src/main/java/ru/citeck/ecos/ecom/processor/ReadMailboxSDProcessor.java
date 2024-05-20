@@ -43,6 +43,8 @@ public class ReadMailboxSDProcessor implements Processor {
     private static final String CLIENT_SK = "clients-type";
     private static final String PERSON_SK = "person";
 
+    private static final String SD_TYPE = "sd-request-type";
+
     private static final String SD_CODE__PATTERN = "\\((SD-\\d+)\\)";
 
     private static final String SD_RESPONSE_MAIL_PREFIX = "Re: (SD-";
@@ -111,6 +113,7 @@ public class ReadMailboxSDProcessor implements Processor {
             }
         }
         Map<String, String> bodyMap = mail.toMap();
+        bodyMap.put("_type", SD_TYPE);
         bodyMap.put("client", client.toString());
         bodyMap.put("initiator", initiator.toString());
 
@@ -210,7 +213,7 @@ public class ReadMailboxSDProcessor implements Processor {
                             Predicates.and(
                                     Predicates.eq("_docNum", sdNumber),
                                     Predicates.eq("_type", "emodel/type@sd-request-type")
-                                    )
+                            )
                     )
                     .build();
 
