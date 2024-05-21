@@ -129,6 +129,11 @@ public class RecordsDaoEndpoint {
         }
         ObjectData targetAttributesData = ObjectData.create();
         targetAttributesData.set("id", idValue);
+
+        if (propsMap.containsKey("_type")) {
+            targetAttributesData.set("_type", propsMap.get("_type"));
+        }
+
         columnMap.forEach((srcColumn, targetColumn) -> {
                     Object value = propsMap.get(srcColumn);
                     if (tmpValueConvertMap != null && tmpValueConvertMap.containsKey(srcColumn)) {
@@ -159,7 +164,7 @@ public class RecordsDaoEndpoint {
         AtomicReference<EntityRef> resultRef = new AtomicReference<>(EntityRef.EMPTY);
         try {
             AuthContext.runAsJ(authData, () -> resultRef.set(recordsService.mutate(recordAtts)));
-        }catch (Exception e) {
+        } catch (Exception e) {
             log.error("Failed to mutate record {}", recordAtts, e);
         }
         log.debug("Mutated {}", resultRef.get());
@@ -266,7 +271,7 @@ public class RecordsDaoEndpoint {
         }
     }
 
-    private String getHost(){
+    private String getHost() {
         return ecosWebAppProps.getWebUrl();
     }
 
@@ -282,7 +287,7 @@ public class RecordsDaoEndpoint {
     }
 
 
-    private String removeImageTag(String text){
+    private String removeImageTag(String text) {
         if (text == null || text.isEmpty()) {
             return "";
         }
