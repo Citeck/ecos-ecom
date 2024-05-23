@@ -2,6 +2,7 @@ package ru.citeck.ecos.ecom.processor;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.camel.Exchange;
 import org.apache.camel.Message;
 import org.apache.camel.Processor;
@@ -26,9 +27,7 @@ import ru.citeck.ecos.webapp.api.entity.EntityRef;
 
 import javax.mail.internet.MimeUtility;
 import java.io.UnsupportedEncodingException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @PropertySource(ignoreResourceNotFound = true, value = "classpath:application.yml")
@@ -172,7 +171,7 @@ public class ReadMailboxSDProcessor implements Processor {
         ClientUsers clientUsers = AuthContext.runAsSystem(
                 () -> recordsService.getAtts(client, ClientUsers.class)
         );
-        for (UserData user : clientUsers.users) {
+        for (UserData user : clientUsers.getAllClientUsers()) {
             if (user.getEmail().equalsIgnoreCase(email)) {
                 return user.ref;
             }
@@ -237,6 +236,28 @@ public class ReadMailboxSDProcessor implements Processor {
     private static class ClientUsers {
         @AttName("users[]")
         private List<UserData> users = Collections.emptyList();
+
+        private List<GroupData> authGroups = Collections.emptyList();
+
+        public List<UserData> getAllClientUsers() {
+            Map<String, UserData> allUsers = new LinkedHashMap<>();
+            if (users != null) {
+                users.forEach(user -> allUsers.put(user.userName, user));
+            }
+            if (authGroups != null) {
+                for (GroupData group : authGroups) {
+                    if (group != null && group.containedUsers != null) {
+                        group.containedUsers.forEach(user -> allUsers.put(user.userName, user));
+                    }
+                }
+            }
+            return new ArrayList<>(allUsers.values());
+        }
+    }
+
+    @Data
+    private static class GroupData {
+         private List<UserData> containedUsers = Collections.emptyList();
     }
 
     @Data
