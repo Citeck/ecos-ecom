@@ -2,7 +2,6 @@ package ru.citeck.ecos.ecom.processor;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.apache.camel.Exchange;
 import org.apache.camel.Message;
 import org.apache.camel.Processor;
@@ -41,8 +40,6 @@ public class ReadMailboxSDProcessor implements Processor {
 
     private static final String CLIENT_SK = "clients-type";
     private static final String PERSON_SK = "person";
-
-    private static final String SD_TYPE = "sd-request-type";
 
     private static final String SD_CODE__PATTERN = "\\((SD-\\d+)\\)";
 
@@ -112,7 +109,6 @@ public class ReadMailboxSDProcessor implements Processor {
             }
         }
         Map<String, String> bodyMap = mail.toMap();
-        bodyMap.put("_type", SD_TYPE);
         bodyMap.put("client", client.toString());
         bodyMap.put("initiator", initiator.toString());
 
@@ -206,7 +202,7 @@ public class ReadMailboxSDProcessor implements Processor {
             var sdNumber = Integer.parseInt(StringUtils.substringAfter(sdCode, "SD-"));
 
             RecordsQuery query = RecordsQuery.create()
-                    .withSourceId(AppName.EMODEL + "/" + "task-tracker")
+                    .withSourceId(AppName.EMODEL + "/" + "sd-request-type")
                     .withLanguage(PredicateService.LANGUAGE_PREDICATE)
                     .withQuery(
                             Predicates.and(

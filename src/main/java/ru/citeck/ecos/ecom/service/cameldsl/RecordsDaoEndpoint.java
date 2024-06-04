@@ -172,7 +172,7 @@ public class RecordsDaoEndpoint {
         if (!savedDocuments.isEmpty()) {
             savedDocuments.forEach(entityRef -> log.debug("Saved document {}", entityRef));
         }
-        if (resultRef.get().getSourceId().equals("task-tracker")) {
+        if (resultRef.get().getSourceId().equals("sd-request-type")) {
             addDocsLinksForExistingRecord(savedDocuments, resultRef.get(), authData);
         }
     }
