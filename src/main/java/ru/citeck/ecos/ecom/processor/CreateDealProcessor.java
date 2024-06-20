@@ -6,7 +6,6 @@ import org.apache.camel.Processor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
@@ -26,9 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static ru.citeck.ecos.ecom.processor.ReadMailboxCRMProcessor.EMAIL_KIND;
-import static ru.citeck.ecos.ecom.processor.ReadMailboxCRMProcessor.OTHER_KIND;
 
-@PropertySource(ignoreResourceNotFound = true, value = "classpath:application.yml")
 @Slf4j
 @Component
 public class CreateDealProcessor implements Processor {
@@ -166,9 +163,11 @@ public class CreateDealProcessor implements Processor {
             deal.setRequestCategory(requestCategory.getAsString());
         }
 
-        if (exchange.getProperty("subject").equals("deal"))
+        if (exchange.getProperty("subject").equals("deal")) {
             deal.setCreatedAutomatically(true);
-        else deal.setCreatedAutomatically(false);
+        } else {
+            deal.setCreatedAutomatically(false);
+        }
 
         log.debug("deal: " + deal);
         exchange.getIn().setBody(deal.toMap());

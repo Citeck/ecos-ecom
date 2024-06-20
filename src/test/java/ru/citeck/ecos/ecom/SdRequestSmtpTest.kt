@@ -7,7 +7,7 @@ class SdRequestSmtpTest : SdRequestTestBase() {
 
     @Test
     fun test() {
-        sendEmail("test", "abcd", emptyList())
+        sendEmail("test", "abcd", emptyMap())
 
         Thread.sleep(3000)
 

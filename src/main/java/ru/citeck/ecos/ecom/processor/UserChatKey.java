@@ -6,6 +6,7 @@ import java.util.Objects;
  * Class - key for different users processes
  */
 public class UserChatKey {
+
     private Long userId;
     private String chatId;
     //private String phone;

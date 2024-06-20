@@ -7,17 +7,19 @@ import org.apache.camel.Processor;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 import ru.citeck.ecos.ecom.dto.MailDTO;
 
 import javax.mail.internet.MimeUtility;
 import java.io.UnsupportedEncodingException;
 
-@PropertySource(ignoreResourceNotFound = true, value = "classpath:application.yml")
 @Slf4j
 @Component
 public class ReadMailboxCRMProcessor implements Processor {
+
+    private static final String MAIL_FROM = "From";
+    private static final String MAIL_SUBJECT = "Subject";
+    private static final String MAIL_DATE = "Date";
 
     @Value("${mail.deal.subject.consult}")
     private String[] dealSubjectsConsult;
@@ -91,7 +93,6 @@ public class ReadMailboxCRMProcessor implements Processor {
             else {
                 mail.setKind(OTHER_KIND);
                 exchange.setProperty("subject", "other");
-                //exchange.getIn().setBody(mail.toMap());
             }
         }
     }
@@ -104,7 +105,6 @@ public class ReadMailboxCRMProcessor implements Processor {
         if (value == null) {
             return "";
         }
-
         try {
             return MimeUtility.decodeText(value);
         }
@@ -112,8 +112,4 @@ public class ReadMailboxCRMProcessor implements Processor {
             throw new IllegalStateException(ex);
         }
     }
-
-    private final String MAIL_FROM = "From";
-    private final String MAIL_SUBJECT = "Subject";
-    private final String MAIL_DATE = "Date";
 }

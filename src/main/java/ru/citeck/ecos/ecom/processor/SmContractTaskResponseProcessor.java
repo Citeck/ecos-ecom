@@ -148,7 +148,6 @@ public class SmContractTaskResponseProcessor implements Processor {
         private String id;
         private String definitionKey;
         private List<TaskPossibleOutcomes> possibleOutcomes;
-
     }
 
     @Data

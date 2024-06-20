@@ -7,13 +7,11 @@ import org.apache.camel.Processor;
 import org.apache.camel.attachment.AttachmentMessage;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
 import ru.citeck.ecos.ecom.dto.SmContractResponseDto;
 import ru.citeck.ecos.records2.predicate.PredicateService;
 import ru.citeck.ecos.records2.predicate.model.Predicates;
-import ru.citeck.ecos.records2.rest.RemoteRecordsUtils;
 import ru.citeck.ecos.records3.RecordsService;
 import ru.citeck.ecos.records3.record.dao.query.dto.query.RecordsQuery;
 import ru.citeck.ecos.webapp.api.constants.AppName;
@@ -26,7 +24,6 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 @Slf4j
-@PropertySource(ignoreResourceNotFound = true, value = "classpath:application.yml")
 @Component
 public class ReadMailboxSmContractProcessor implements Processor {
 
@@ -127,13 +124,10 @@ public class ReadMailboxSmContractProcessor implements Processor {
         RecordsQuery query = RecordsQuery.create()
                 .withSourceId(AppName.EMODEL + "/" + PERSON_SK)
                 .withLanguage(PredicateService.LANGUAGE_PREDICATE)
-                .withQuery(
-                        Predicates.eq("email", email))
+                .withQuery(Predicates.eq("email", email))
                 .build();
 
-        EntityRef result = RemoteRecordsUtils.runAsSystem(() -> recordsService.queryOne(query));
-
-        return result;
+        return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
     }
 
 

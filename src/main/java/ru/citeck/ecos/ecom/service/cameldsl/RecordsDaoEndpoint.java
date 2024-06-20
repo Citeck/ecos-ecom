@@ -11,18 +11,14 @@ import org.apache.camel.ExchangePropertyKey;
 import org.apache.camel.Handler;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.xerces.dom.DeferredElementNSImpl;
-import org.jsoup.Jsoup;
-import org.jsoup.safety.Safelist;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import ru.citeck.ecos.commons.data.DataValue;
 import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
 import ru.citeck.ecos.context.lib.auth.AuthUser;
 import ru.citeck.ecos.context.lib.auth.data.AuthData;
 import ru.citeck.ecos.context.lib.auth.data.SimpleAuthData;
-import ru.citeck.ecos.ecom.service.documents.DocumentDao;
 import ru.citeck.ecos.records3.RecordsService;
 import ru.citeck.ecos.records3.record.atts.dto.RecordAtts;
 import ru.citeck.ecos.webapp.api.content.EcosContentApi;
@@ -44,11 +40,9 @@ public class RecordsDaoEndpoint {
      * Represents any value of property in transformation map
      */
     private static final String ANY_VALUE = "*";
-    private static final String LETTER_CONTENT_ATTRIBUTE = "letterContent";
 
     private EcosContentApi ecosContentApi;
     private RecordsService recordsService;
-    private DocumentDao documentDao;
     private EcosWebAppProps ecosWebAppProps;
 
     /**
@@ -163,28 +157,6 @@ public class RecordsDaoEndpoint {
             log.error("Failed to mutate record {}", recordAtts, e);
         }
         log.debug("Mutated {}", resultRef.get());
-        List<EntityRef> savedDocuments = documentDao.saveDocumentsForSDRecord(exchange, resultRef.get());
-        if (!savedDocuments.isEmpty()) {
-            savedDocuments.forEach(entityRef -> log.debug("Saved document {}", entityRef));
-        }
-        if (resultRef.get().getSourceId().equals("sd-request-type")) {
-            addDocsLinksForExistingRecord(savedDocuments, resultRef.get(), authData);
-        }
-    }
-
-    private void addDocsLinksForExistingRecord(List<EntityRef> savedDocuments, EntityRef ref, AuthData authData) {
-        var links = savedDocuments.stream().map(unit -> ecosContentApi.getDownloadUrl(unit))
-                .map(unit -> getHost() + unit).toList();
-        String allLinks = StringUtils.join(links, ", ");
-        AtomicReference<DataValue> content = new AtomicReference<>();
-        try {
-            AuthContext.runAsJ(authData, () -> {
-                content.set(recordsService.getAtt(ref, LETTER_CONTENT_ATTRIBUTE));
-                recordsService.mutateAtt(ref, LETTER_CONTENT_ATTRIBUTE, removeImageTag(content.get().asText()) + " " + allLinks);
-            });
-        } catch (Exception e) {
-            log.error("Failed to mutate record {}", content.get().asText(), e);
-        }
     }
 
     /**
@@ -266,10 +238,6 @@ public class RecordsDaoEndpoint {
         }
     }
 
-    private String getHost(){
-        return ecosWebAppProps.getWebUrl();
-    }
-
     private AuthData getAuthDataForUser(String runAsUser) {
         if (StringUtils.isBlank(runAsUser)) {
             return new SimpleAuthData(AuthUser.SYSTEM, AuthContext.getSystemAuthorities());
@@ -281,14 +249,6 @@ public class RecordsDaoEndpoint {
         }
     }
 
-
-    private String removeImageTag(String text){
-        if (text == null || text.isEmpty()) {
-            return "";
-        }
-        return Jsoup.clean(text, Safelist.basic());
-    }
-
     @Autowired
     public void setEcosContentApi(EcosContentApi ecosContentApi) {
         this.ecosContentApi = ecosContentApi;
@@ -297,11 +257,6 @@ public class RecordsDaoEndpoint {
     @Autowired
     public void setRecordsService(RecordsService recordsService) {
         this.recordsService = recordsService;
-    }
-
-    @Autowired
-    public void setDocumentDao(DocumentDao documentDao) {
-        this.documentDao = documentDao;
     }
 
     @Autowired

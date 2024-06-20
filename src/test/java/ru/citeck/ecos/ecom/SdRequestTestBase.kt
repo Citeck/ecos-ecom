@@ -6,19 +6,18 @@ import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.support.DefaultRegistry
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
-import org.mockito.Mockito
 import ru.citeck.ecos.config.lib.service.EcosConfigServiceFactory
-import ru.citeck.ecos.ecom.processor.ReadMailboxSDProcessor
-import ru.citeck.ecos.ecom.routes.CreateCommentRoute
-import ru.citeck.ecos.ecom.routes.CreateSDRoute
+import ru.citeck.ecos.ecom.processor.sd.SdEcomMailProcessor
+import ru.citeck.ecos.ecom.processor.sd.SdRequestDesc
 import ru.citeck.ecos.ecom.routes.ReadMailboxSDRoute
-import ru.citeck.ecos.ecom.service.cameldsl.RecordsDaoEndpoint
-import ru.citeck.ecos.ecom.service.documents.DocumentDao
+import ru.citeck.ecos.model.lib.ModelServiceFactory
+import ru.citeck.ecos.model.lib.type.dto.TypeInfo
+import ru.citeck.ecos.model.lib.type.repo.TypesRepo
 import ru.citeck.ecos.records3.RecordsService
 import ru.citeck.ecos.records3.RecordsServiceFactory
 import ru.citeck.ecos.records3.record.dao.impl.mem.InMemDataRecordsDao
 import ru.citeck.ecos.records3.record.dao.query.dto.query.RecordsQuery
-import ru.citeck.ecos.webapp.api.content.EcosContentApi
+import ru.citeck.ecos.test.commons.EcosWebAppApiMock
 import ru.citeck.ecos.webapp.api.entity.EntityRef
 import java.util.*
 import javax.mail.Message
@@ -51,7 +50,29 @@ abstract class SdRequestTestBase {
         greenMail.reset()
         greenMail.setUser(INBOX_EMAIL, USERNAME, PASSWORD)
 
-        recordsService = RecordsServiceFactory().recordsServiceV1
+        val recsServiceFactory = RecordsServiceFactory()
+
+        val modelServices = object : ModelServiceFactory() {
+            override fun createTypesRepo(): TypesRepo {
+                return object : TypesRepo {
+                    override fun getChildren(typeRef: EntityRef): List<EntityRef> {
+                        return emptyList()
+                    }
+                    override fun getTypeInfo(typeRef: EntityRef): TypeInfo? {
+                        if (typeRef.getLocalId() == SdRequestDesc.TYPE.getLocalId()) {
+                            return TypeInfo.create()
+                                .withId(SdRequestDesc.TYPE.getLocalId())
+                                .withSourceId(SD_REQ_SRC_ID)
+                                .build()
+                        }
+                        return null
+                    }
+                }
+            }
+        }
+        modelServices.setRecordsServices(recsServiceFactory)
+
+        recordsService = recsServiceFactory.recordsServiceV1
         recordsService.register(InMemDataRecordsDao(CLIENTS_SRC_ID))
         recordsService.create(
             CLIENTS_SRC_ID,
@@ -68,33 +89,26 @@ abstract class SdRequestTestBase {
         )
         recordsService.register(InMemDataRecordsDao(SD_REQ_SRC_ID))
 
-        val documentsDao = Mockito.mock(DocumentDao::class.java)
+        val webappApi = EcosWebAppApiMock()
 
-        val processor = ReadMailboxSDProcessor()
-        processor.setRecordsService(recordsService)
-        processor.setDocumentDao(documentsDao)
+        val processor = SdEcomMailProcessor(recordsService, webappApi.getContentApi())
 
         val configServices = EcosConfigServiceFactory()
 
         val readMailRoute = ReadMailboxSDRoute()
-        readMailRoute.setReadMailboxSDProcessor(processor)
+        readMailRoute.setSdEcomMailProcessor(processor)
 
         configServices.beanConsumersService.registerConsumers(readMailRoute)
 
         val host = greenMail.imap.bindTo + ":" + greenMail.imap.port
-        configServices.inMemConfigProvider.setConfig("mail-inbox-sd", "imap://$host?username=$USERNAME&password=$PASSWORD&delete=false&unseen=true&delay=1000")
-
-        val recsDaoEndpoint = RecordsDaoEndpoint()
-        recsDaoEndpoint.documentDao = documentsDao
-        recsDaoEndpoint.ecosContentApi = Mockito.mock(EcosContentApi::class.java)
-        recsDaoEndpoint.recordsService = recordsService
+        configServices.inMemConfigProvider.setConfig(
+            "mail-inbox-sd",
+            "imap://$host?username=$USERNAME&password=$PASSWORD&delete=false&unseen=true&delay=1000"
+        )
 
         val registry = DefaultRegistry()
-        registry.bind("recsDaoEndpoint", recsDaoEndpoint)
         camelCtx = DefaultCamelContext(registry)
         camelCtx.addRoutes(readMailRoute)
-        camelCtx.addRoutes(CreateSDRoute())
-        camelCtx.addRoutes(CreateCommentRoute())
 
         camelCtx.start()
     }
@@ -106,7 +120,7 @@ abstract class SdRequestTestBase {
         ).getRecords()
     }
 
-    fun sendEmail(subject: String, body: String, attachments: List<ByteArray>) {
+    fun sendEmail(subject: String, body: String, attachments: Map<String, ByteArray>) {
         val prop = Properties()
         prop["mail.smtp.auth"] = false
         prop["mail.smtp.host"] = greenMail.smtp.bindTo

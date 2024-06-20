@@ -1,6 +1,5 @@
 package ru.citeck.ecos.ecom.service.cameldsl;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.Exchange;
 import org.apache.camel.Handler;
@@ -73,13 +72,13 @@ public class MailBodyExtractor {
     }
 
     private String removeVulnerabilities(String data) {
-        if (data == null){
+        if (data == null) {
             return null;
         }
-
         Document doc = Jsoup.parse(data);
         TAGS_TO_REMOVE.forEach(tagsToRemove -> doc.getElementsByTag(tagsToRemove).remove());
-        return doc.toString();
+        doc.outputSettings().prettyPrint(false);
+        return doc.body().html().replace("&nbsp;", " ");
     }
 
     private String getText(Part p) {
