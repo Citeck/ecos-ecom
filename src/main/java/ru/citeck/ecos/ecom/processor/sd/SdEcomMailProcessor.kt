@@ -118,8 +118,6 @@ class SdEcomMailProcessor(
         if (mailKind == MailKind.REPLY) {
             createComment(sdRequestRef, mail, createdAttachments)
         }
-
-        addDocsLinksToLetterContent(createdAttachments, sdRequestRef)
     }
 
     private fun createComment(
@@ -158,21 +156,6 @@ class SdEcomMailProcessor(
             .set("text", text)
 
         recordsService.create(COMMENT_SRC_ID, attributes)
-    }
-
-    private fun addDocsLinksToLetterContent(
-        attachments: List<Pair<EntityRef, EcosContentData>>,
-        sdRequestRef: EntityRef
-    ) {
-        if (attachments.isEmpty()) {
-            return
-        }
-        var letterContent = recordsService.getAtt(sdRequestRef, SdRequestDesc.ATT_LETTER_CONTENT).asText()
-        for (attachment in attachments) {
-            val url = ecosContentApi.getDownloadUrl(attachment.first)
-            letterContent += "<p><a href=\"$url\">${attachment.second.getName()}</a></p>"
-        }
-        recordsService.mutateAtt(sdRequestRef, SdRequestDesc.ATT_LETTER_CONTENT, letterContent)
     }
 
     private fun getAuthDataForUser(userRef: EntityRef): AuthData {
