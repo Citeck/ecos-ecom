@@ -29,6 +29,8 @@ object HtmlUtils {
                     if (tag == "div") {
                         if (depth == 1) {
                             node.replaceWith(Element("p").appendChildren(node.childNodes()))
+                        } else {
+                            node.replaceWith(TextNode(node.wholeText()))
                         }
                     } else if (!validTags.contains(tag)) {
                         var newNode: Node = TextNode(node.wholeText())

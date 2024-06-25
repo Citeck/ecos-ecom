@@ -1,7 +1,11 @@
 package ru.citeck.ecos.ecom
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import ru.citeck.ecos.commons.utils.resource.ResourceUtils
+import java.io.FileInputStream
+import javax.mail.internet.MimeMessage
 
 class SdRequestSmtpTest : SdRequestTestBase() {
 
@@ -20,5 +24,17 @@ class SdRequestSmtpTest : SdRequestTestBase() {
         assertThat(sdRequests[0].createdAutomatically).isEqualTo(true)
         assertThat(sdRequests[0].priority).isEqualTo("medium")
         assertThat(sdRequests[0].letterContent).contains("abcd")
+    }
+
+    @Test
+    @Disabled
+    fun testWithMailFile() {
+
+        val file = ResourceUtils.getFile("classpath:Message17192186730071576917.eml")
+
+        val message: MimeMessage = FileInputStream(file).use { MimeMessage(getMailSession(), it) }
+
+        sendEMail(message)
+        Thread.sleep(10000)
     }
 }

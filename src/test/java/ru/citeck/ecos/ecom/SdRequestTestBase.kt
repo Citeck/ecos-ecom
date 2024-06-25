@@ -120,15 +120,14 @@ abstract class SdRequestTestBase {
         ).getRecords()
     }
 
+    fun sendEMail(message: Message) {
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(INBOX_EMAIL))
+        Transport.send(message)
+    }
+
     fun sendEmail(subject: String, body: String, attachments: Map<String, ByteArray>) {
-        val prop = Properties()
-        prop["mail.smtp.auth"] = false
-        prop["mail.smtp.host"] = greenMail.smtp.bindTo
-        prop["mail.smtp.port"] = greenMail.smtp.port
 
-        val session: Session = Session.getInstance(prop, null)
-
-        val message: Message = MimeMessage(session)
+        val message: Message = MimeMessage(getMailSession())
         message.setFrom(InternetAddress("Petr Ivanov <petr@test.com>"))
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(INBOX_EMAIL))
         message.subject = subject
@@ -142,6 +141,16 @@ abstract class SdRequestTestBase {
         message.setContent(multipart)
 
         Transport.send(message)
+    }
+
+    fun getMailSession(): Session {
+
+        val prop = Properties()
+        prop["mail.smtp.auth"] = false
+        prop["mail.smtp.host"] = greenMail.smtp.bindTo
+        prop["mail.smtp.port"] = greenMail.smtp.port
+
+        return Session.getInstance(prop, null)
     }
 
     @AfterEach
