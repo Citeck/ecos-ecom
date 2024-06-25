@@ -130,13 +130,13 @@ class SdEcomMailProcessor(
             "Create new comment for SD request $sdRecord by mail from ${mail.from}. Mail date: ${mail.date}"
         }
 
-        val text = if (attachments.isEmpty()) {
-            mail.content
-        } else {
-            val commentContent = HtmlUtils.convertHtmlToFormattedText(mail.content)
+        var commentContent = HtmlUtils.convertHtmlToFormattedText(mail.content)
+
+        if (attachments.isNotEmpty()) {
+
             val newContent = StringBuilder((commentContent.length * 1.5).toInt())
 
-            newContent.append("<p>").append(commentContent).append("</p>")
+            newContent.append(commentContent)
             for (attachment in attachments) {
                 newContent.append("<p><span>")
                 val attachmentData = mapOf(
@@ -148,12 +148,12 @@ class SdEcomMailProcessor(
                 newContent.append(Json.mapper.toStringNotNull(attachmentData))
                 newContent.append("</span></p>")
             }
-            newContent.toString()
+            commentContent = newContent.toString()
         }
 
         val attributes = ObjectData.create()
             .set("record", sdRecord)
-            .set("text", text)
+            .set("text", commentContent)
 
         recordsService.create(COMMENT_SRC_ID, attributes)
     }
