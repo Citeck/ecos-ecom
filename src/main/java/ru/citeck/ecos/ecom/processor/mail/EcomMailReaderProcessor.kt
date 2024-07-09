@@ -50,31 +50,33 @@ class EcomMailReaderProcessor : Processor {
             subject = decodeText(message.getHeader(MAIL_SUBJECT, String::class.java)),
             content = message.getHeader(MailBodyExtractor.MAIL_TEXT_ATT, String::class.java) ?: "",
             date = parseDate(message.getHeader(MAIL_DATE, String::class.java), from),
-            attachments = readAttachments(exchange.getIn() as? MailMessage)
+            attachments = readAttachments(exchange.getIn(), ArrayList())
         )
 
         exchange.getIn().body = ecomMail
     }
 
-    private fun readAttachments(message: MailMessage?): List<EcomMailAttachment> {
-        message ?: return emptyList()
-        val body = message.body
-        if (body !is Multipart) {
-            return emptyList()
+    private fun readAttachments(content: Any?, attachments: MutableList<EcomMailAttachment>): List<EcomMailAttachment> {
+        content ?: return attachments
+        if (content is MailMessage) {
+            readAttachments(content.body, attachments)
+            return attachments
         }
-        val attachments = ArrayList<EcomMailAttachment>()
-        for (i in 0 until body.count) {
-            val bodyPart = body.getBodyPart(i)
-            if (bodyPart.disposition != Part.ATTACHMENT && bodyPart.disposition != Part.INLINE) {
-                continue
+        if (content !is Multipart) {
+            return attachments
+        }
+        for (i in 0 until content.count) {
+            val bodyPart = content.getBodyPart(i)
+            if (bodyPart.disposition == Part.ATTACHMENT || bodyPart.disposition == Part.INLINE) {
+                var fileName = decodeText(bodyPart.fileName)
+                if (fileName.isBlank()) {
+                    val baseName = UUID.randomUUID().toString()
+                    val type = MimeTypes.parseOrBin(bodyPart.contentType)
+                    fileName = baseName + "." + type.getExtension().ifBlank { ".bin" }
+                }
+                attachments.add(BodyPartAttachment(bodyPart, fileName))
             }
-            var fileName = decodeText(bodyPart.fileName)
-            if (fileName.isBlank()) {
-                val baseName = UUID.randomUUID().toString()
-                val type = MimeTypes.parseOrBin(bodyPart.contentType)
-                fileName = baseName + "." + type.getExtension().ifBlank { ".bin" }
-            }
-            attachments.add(BodyPartAttachment(bodyPart, fileName))
+            readAttachments(bodyPart.content, attachments)
         }
         return attachments
     }
