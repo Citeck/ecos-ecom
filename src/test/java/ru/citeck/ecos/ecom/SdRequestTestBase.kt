@@ -2,6 +2,14 @@ package ru.citeck.ecos.ecom
 
 import com.icegreen.greenmail.util.GreenMail
 import com.icegreen.greenmail.util.ServerSetupTest
+import jakarta.mail.Message
+import jakarta.mail.Multipart
+import jakarta.mail.Session
+import jakarta.mail.Transport
+import jakarta.mail.internet.InternetAddress
+import jakarta.mail.internet.MimeBodyPart
+import jakarta.mail.internet.MimeMessage
+import jakarta.mail.internet.MimeMultipart
 import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.support.DefaultRegistry
 import org.junit.jupiter.api.AfterEach
@@ -20,14 +28,6 @@ import ru.citeck.ecos.records3.record.dao.query.dto.query.RecordsQuery
 import ru.citeck.ecos.test.commons.EcosWebAppApiMock
 import ru.citeck.ecos.webapp.api.entity.EntityRef
 import java.util.*
-import javax.mail.Message
-import javax.mail.Multipart
-import javax.mail.Session
-import javax.mail.Transport
-import javax.mail.internet.InternetAddress
-import javax.mail.internet.MimeBodyPart
-import javax.mail.internet.MimeMessage
-import javax.mail.internet.MimeMultipart
 
 abstract class SdRequestTestBase {
 
@@ -72,7 +72,7 @@ abstract class SdRequestTestBase {
         }
         modelServices.setRecordsServices(recsServiceFactory)
 
-        recordsService = recsServiceFactory.recordsServiceV1
+        recordsService = recsServiceFactory.recordsService
         recordsService.register(InMemDataRecordsDao(CLIENTS_SRC_ID))
         recordsService.create(
             CLIENTS_SRC_ID,

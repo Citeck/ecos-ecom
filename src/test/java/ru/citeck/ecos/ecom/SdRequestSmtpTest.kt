@@ -1,11 +1,11 @@
 package ru.citeck.ecos.ecom
 
+import jakarta.mail.internet.MimeMessage
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import ru.citeck.ecos.commons.utils.resource.ResourceUtils
 import java.io.FileInputStream
-import javax.mail.internet.MimeMessage
 
 class SdRequestSmtpTest : SdRequestTestBase() {
 

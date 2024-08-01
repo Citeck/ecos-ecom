@@ -1,9 +1,9 @@
 package ru.citeck.ecos.ecom.service.cameldsl;
 
 import com.google.common.base.Splitter;
-import ecos.com.fasterxml.jackson210.core.JsonProcessingException;
-import ecos.com.fasterxml.jackson210.core.type.TypeReference;
-import ecos.com.fasterxml.jackson210.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.Exchange;

@@ -1,7 +1,7 @@
 package ru.citeck.ecos.ecom.processor.sd
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import lombok.Data
-import mu.KotlinLogging
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.apache.commons.lang3.StringUtils
@@ -174,10 +174,10 @@ class SdEcomMailProcessor(
 
                 log.info {
                     "Create new SD request by mail from ${mail.from}. " +
-                            "Subject: ${mail.subject} " +
-                            "Date: ${mail.date} " +
-                            "Initiator: $initiator " +
-                            "Client: $client"
+                        "Subject: ${mail.subject} " +
+                        "Date: ${mail.date} " +
+                        "Initiator: $initiator " +
+                        "Client: $client"
                 }
 
                 val hasCriticalTag = Utils.hasCriticalTagsInSubject(mail.subject, tagsString)
@@ -283,9 +283,11 @@ class SdEcomMailProcessor(
         fun getAllClientUsers(): List<UserData> {
 
             val allUsers: MutableMap<String, UserData> = LinkedHashMap()
-            users?.forEach(Consumer { user: UserData ->
-                allUsers[user.userName] = user
-            })
+            users?.forEach(
+                Consumer { user: UserData ->
+                    allUsers[user.userName] = user
+                }
+            )
             if (authGroups != null) {
                 for (group in authGroups) {
                     if (group.containedUsers != null) {
@@ -312,6 +314,7 @@ class SdEcomMailProcessor(
     )
 
     private enum class MailKind {
-        NEW, REPLY
+        NEW,
+        REPLY
     }
 }

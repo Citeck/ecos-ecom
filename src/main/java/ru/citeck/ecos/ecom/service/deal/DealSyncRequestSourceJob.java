@@ -25,7 +25,7 @@ import ru.citeck.ecos.webapp.api.lock.LockContext;
 import ru.citeck.ecos.webapp.api.task.scheduler.EcosTaskSchedulerApi;
 import ru.citeck.ecos.webapp.lib.lock.EcosAppLockService;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.List;
 

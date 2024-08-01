@@ -3,9 +3,9 @@ package ru.citeck.ecos.ecom.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.citeck.ecos.context.lib.auth.AuthContext;
 import ru.citeck.ecos.records2.predicate.PredicateService;
 import ru.citeck.ecos.records2.predicate.model.Predicates;
-import ru.citeck.ecos.records2.rest.RemoteRecordsUtils;
 import ru.citeck.ecos.records3.RecordsService;
 import ru.citeck.ecos.records3.record.atts.dto.RecordAtts;
 import ru.citeck.ecos.records3.record.dao.query.dto.query.RecordsQuery;
@@ -31,7 +31,7 @@ public class EcosAuthorityProvider {
                         Predicates.eq("mobile", phoneNumber))
                 .build();
 
-        String result = RemoteRecordsUtils.runAsSystem(() -> recordsService.queryOne(query, "id").asText());
+        String result = AuthContext.runAsSystem(() -> recordsService.queryOne(query, "id").asText());
 
         return result;
     }
@@ -46,7 +46,7 @@ public class EcosAuthorityProvider {
                         Predicates.eq("id", user))
                 .build();
 
-        EntityRef result = RemoteRecordsUtils.runAsSystem(() -> recordsService.queryOne(query));
+        EntityRef result = AuthContext.runAsSystem(() -> recordsService.queryOne(query));
 
         return result;
     }
@@ -66,7 +66,7 @@ public class EcosAuthorityProvider {
 
         log.debug(query.toString());
 
-        String result = RemoteRecordsUtils.runAsSystem(() -> recordsService.queryOne(query, "id").asText());
+        String result = AuthContext.runAsSystem(() -> recordsService.queryOne(query, "id").asText());
         log.debug("user by id: " + result);
 
         return result;
@@ -81,13 +81,13 @@ public class EcosAuthorityProvider {
                 .build();
         log.debug(userQuery.toString());
 
-        EntityRef userRecordRef = RemoteRecordsUtils.runAsSystem(() -> recordsService.queryOne(userQuery));
+        EntityRef userRecordRef = AuthContext.runAsSystem(() -> recordsService.queryOne(userQuery));
         log.debug(userRecordRef.toString());
 
         RecordAtts toMutate = new RecordAtts();
         toMutate.setId(userRecordRef);
         toMutate.setAtt("telegramUserId", id);
-        String result = RemoteRecordsUtils.runAsSystem(() -> recordsService.mutate(toMutate)).toString();
+        String result = AuthContext.runAsSystem(() -> recordsService.mutate(toMutate)).toString();
         log.debug("mutated user recordRef: " + result);
     }
 

@@ -14,12 +14,12 @@ class EcomMail(
 
     override fun toString(): String {
         return "EcomMail(" +
-                "from='$from', " +
-                "fromAddress='$fromAddress', " +
-                "fromDomain='$fromDomain', " +
-                "subject='$subject', " +
-                "content='$content', " +
-                "date=$date, " +
-                "attachments=${attachments.map { it.getName() }})"
+            "from='$from', " +
+            "fromAddress='$fromAddress', " +
+            "fromDomain='$fromDomain', " +
+            "subject='$subject', " +
+            "content='$content', " +
+            "date=$date, " +
+            "attachments=${attachments.map { it.getName() }})"
     }
 }

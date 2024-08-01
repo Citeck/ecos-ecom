@@ -1,6 +1,6 @@
 package ru.citeck.ecos.ecom.service;
 //
-//import ecos.com.fasterxml.jackson210.annotation.JsonProperty;
+//import com.fasterxml.jackson.annotation.JsonProperty;
 //import lombok.AllArgsConstructor;
 //import lombok.Data;
 //import lombok.NoArgsConstructor;

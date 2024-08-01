@@ -1,4 +1,4 @@
 ---
 type: 'maven-webapp'
 properties:
-  jdk: JDK17
+  jdk: JDK21

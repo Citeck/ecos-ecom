@@ -1,7 +1,7 @@
 package ru.citeck.ecos.ecom.dto;
 
-import ecos.com.fasterxml.jackson210.annotation.JsonProperty;
-import ecos.com.fasterxml.jackson210.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import org.apache.commons.lang3.time.FastDateFormat;
 import ru.citeck.ecos.webapp.api.entity.EntityRef;

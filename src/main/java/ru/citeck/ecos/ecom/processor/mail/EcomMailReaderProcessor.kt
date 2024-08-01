@@ -1,6 +1,10 @@
 package ru.citeck.ecos.ecom.processor.mail
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
+import jakarta.mail.BodyPart
+import jakarta.mail.Multipart
+import jakarta.mail.Part
+import jakarta.mail.internet.MimeUtility
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.apache.camel.component.mail.MailMessage
@@ -12,10 +16,6 @@ import java.io.InputStream
 import java.text.ParseException
 import java.time.Instant
 import java.util.*
-import javax.mail.BodyPart
-import javax.mail.Multipart
-import javax.mail.Part
-import javax.mail.internet.MimeUtility
 
 class EcomMailReaderProcessor : Processor {
 
@@ -33,7 +33,7 @@ class EcomMailReaderProcessor : Processor {
     override fun process(exchange: Exchange) {
 
         if (exchange.getIn().body == null) {
-            log.debug("Received exchange with empty body, skipping")
+            log.debug { "Received exchange with empty body, skipping" }
             return
         }
 
