@@ -240,7 +240,7 @@ public class RecordsDaoEndpoint {
 
     private AuthData getAuthDataForUser(String runAsUser) {
         if (StringUtils.isBlank(runAsUser)) {
-            return new SimpleAuthData(AuthUser.SYSTEM, AuthContext.getSystemAuthorities());
+            return new SimpleAuthData(AuthUser.SYSTEM, AuthContext.INSTANCE.getSYSTEM_AUTH().getAuthorities());
         } else {
             List<String> authorities = AuthContext.runAsSystemJ(() ->
                     recordsService.getAtt(runAsUser, "authorities.list[]").asList(String.class)
