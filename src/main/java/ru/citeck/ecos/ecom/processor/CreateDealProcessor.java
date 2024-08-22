@@ -128,6 +128,8 @@ public class CreateDealProcessor implements Processor {
             }
         }
 
+        deal.setName(company);
+
         ObjectData contact = ObjectData.create();
         String contactFio = parseDeal(content, DEAL_FIO, 0);
         if (StringUtils.isNotBlank(contactFio)) {

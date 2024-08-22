@@ -23,6 +23,7 @@ public class CreateDealRoute extends RouteBuilder {
         //recordsDaoEndpoint.setSourceId("deal");
         Map<String, String> map = new HashMap<String, String>();
         map.put("fromAddress", "siteEmail");
+        map.put("name", "name");
         map.put("company", "company");
         map.put("counterparty", "counterparty");
         map.put("dateReceived", "dateReceived");

@@ -14,6 +14,7 @@ public class DealDTO {
     private String fromAddress;
     private String subject;
     private String company;
+    private String name;
     private String counterparty;
     private String comment;
     private Date dateReceived;
