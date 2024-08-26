@@ -12,11 +12,13 @@ import ru.citeck.ecos.context.lib.auth.AuthContext;
 import ru.citeck.ecos.ecom.service.deal.dto.AttInfo;
 import ru.citeck.ecos.ecom.service.deal.dto.ContactData;
 import ru.citeck.ecos.ecom.service.deal.dto.MergeInfo;
+import ru.citeck.ecos.records2.RecordConstants;
 import ru.citeck.ecos.records2.predicate.PredicateService;
 import ru.citeck.ecos.records2.predicate.model.Predicates;
 import ru.citeck.ecos.records3.RecordsService;
 import ru.citeck.ecos.records3.record.atts.dto.RecordAtts;
 import ru.citeck.ecos.records3.record.dao.mutate.ValueMutateDao;
+import ru.citeck.ecos.records3.record.dao.query.dto.query.QueryPage;
 import ru.citeck.ecos.records3.record.dao.query.dto.query.RecordsQuery;
 import ru.citeck.ecos.records3.record.dao.query.dto.res.RecsQueryRes;
 import ru.citeck.ecos.webapp.api.constants.AppName;
@@ -25,10 +27,7 @@ import ru.citeck.ecos.webapp.api.entity.EntityRef;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,6 +50,11 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
     private static final String CONTACTS_ATT = "contacts";
 
     private static final String COMMENT_SK = "comment";
+    private static final String ACTIVITY_SK = "activity";
+    private static final String ASSIGNMENT_SK = "assignment-type";
+
+    public static final String ECOS_ACTIVITY_PROCESS_ID = "ecos-activity-process";
+    public static final String ASSIGNMENT_PROCESS_ID = "assignment-process";
 
     private static final Pattern COMMENT_MERGED_MARK = Pattern.compile("Комментрий от [0-9]{2}.[0-9]{2}.[0-9]{4} из сделки [0-9]+");
     private static final DateTimeFormatter COMMENT_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy")
@@ -94,7 +98,11 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
         recordAtts.setAtts(mergedAtts);
         recordsService.mutate(recordAtts);
 
-        AuthContext.runAsSystemJ(() -> mergeComments(mergeInfo));
+        AuthContext.runAsSystemJ(() -> {
+            mergeComments(mergeInfo);
+            mergeActivities(mergeInfo);
+            mergeAssignments(mergeInfo);
+        });
         addMergeResultComment(mergeInfo);
         recordsService.delete(mergeInfo.getMergeFrom());
         return null;
@@ -165,6 +173,98 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
         return text + "<p><br></p><p><br></p><p><span>" +
                 "Комментрий от " + createdDate + " из сделки " + number +
                 "</span></p>";
+    }
+
+    private void mergeActivities(MergeInfo mergeInfo) {
+        String recordId = mergeInfo.getMergeFrom().getAsString();
+        List<EntityRef> activities = recordsService.query(
+                RecordsQuery.create()
+                    .withSourceId(AppName.EMODEL + "/" + ACTIVITY_SK)
+                    .withLanguage(PredicateService.LANGUAGE_PREDICATE)
+                    .withQuery(Predicates.eq(RecordConstants.ATT_PARENT, recordId))
+                    .build()
+            ).getRecords().stream()
+            .filter(record -> !record.getLocalId().startsWith("comment$"))
+            .toList();
+
+        for (EntityRef activity : activities) {
+            RecordAtts recordAtts = new RecordAtts();
+            recordAtts.setId(activity);
+            recordAtts.setAtt(RecordConstants.ATT_PARENT, mergeInfo.getMergeIn().getAsString());
+            recordAtts.setAtt(RecordConstants.ATT_PARENT_ATT, "has-ecos-activities:ecosActivities");
+            recordsService.mutate(recordAtts);
+            updateMainDocumentRefProcessVariable(ECOS_ACTIVITY_PROCESS_ID, activity, mergeInfo.getMergeIn().getAsString());
+        }
+    }
+
+    private void mergeAssignments(MergeInfo mergeInfo) {
+        String recordId = mergeInfo.getMergeFrom().getAsString();
+        List<EntityRef> assignments = recordsService.query(
+            RecordsQuery.create()
+                .withSourceId(AppName.EMODEL + "/" + ASSIGNMENT_SK)
+                .withLanguage(PredicateService.LANGUAGE_PREDICATE)
+                .withQuery(Predicates.eq("assoc:associatedWith", recordId))
+                .build()
+        ).getRecords();
+
+        for (EntityRef assignment : assignments) {
+            RecordAtts recordAtts = new RecordAtts();
+            recordAtts.setId(assignment);
+            recordAtts.setAtt("assoc:associatedWith", mergeInfo.getMergeIn().getAsString());
+            recordsService.mutate(recordAtts);
+            updateMainDocumentRefProcessVariable(ASSIGNMENT_PROCESS_ID, assignment, mergeInfo.getMergeIn().getAsString());
+        }
+    }
+
+    private void updateMainDocumentRefProcessVariable(
+        String processDefinitionKey,
+        EntityRef document,
+        String newValue) {
+        EntityRef processRef = recordsService.queryOne(
+            RecordsQuery.create()
+                .withSourceId("eproc/bpmn-proc")
+                .withLanguage(PredicateService.LANGUAGE_PREDICATE)
+                .withQuery(
+                    Predicates.and(
+                        Predicates.eq("processDefinitionKey", processDefinitionKey),
+                        Predicates.eq("document", document)
+                    )
+                )
+                .withPage(
+                    QueryPage.create()
+                        .withMaxItems(1)
+                        .build()
+                ).build()
+        );
+
+        if (processRef != null) {
+            EntityRef variableRef = recordsService.queryOne(
+                RecordsQuery.create()
+                    .withSourceId("eproc/bpmn-variable-instance")
+                    .withLanguage(PredicateService.LANGUAGE_PREDICATE)
+                    .withQuery(
+                        Predicates.and(
+                            Predicates.eq("processInstance", processRef),
+                            Predicates.eq("name", "mainDocumentRef")
+                        )
+                    )
+                    .withPage(
+                        QueryPage.create()
+                            .withMaxItems(1)
+                            .build()
+                    ).build()
+            );
+
+            if (variableRef != null) {
+                recordsService.mutate(
+                    variableRef,
+                    Map.of(
+                        "type", "string",
+                        "value", newValue
+                    )
+                );
+            }
+        }
     }
 
     private void addMergeResultComment(MergeInfo mergeInfo) {
