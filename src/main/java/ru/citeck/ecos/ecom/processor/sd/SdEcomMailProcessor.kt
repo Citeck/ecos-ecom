@@ -69,22 +69,22 @@ class SdEcomMailProcessor(
 
     private fun processImpl(mail: EcomMail) {
 
-        val client: EntityRef = getClientByEmailDomain(mail.fromDomain)
-        if (client.isEmpty()) {
+        val possibleClients: List<EntityRef> = getClientsByEmailDomain(mail.fromDomain)
+        if (possibleClients.isEmpty()) {
             log.debug { "Client is not found for domain '${mail.fromDomain}'" }
             return
         }
 
-        val initiator: EntityRef = lookupUser(client, mail.fromAddress)
-        if (initiator.isEmpty()) {
+        val userAndClient: UserWithClient = lookupUserAndClient(possibleClients, mail.fromAddress)
+        if (userAndClient.isEmpty()) {
             log.debug { "Initiator is not found for email '${mail.fromAddress}'" }
             return
         }
 
         val mailKind = getMailKind(mail.subject)
 
-        AuthContext.runAsFull(getAuthDataForUser(initiator)) {
-            createAndUpdateData(mailKind, mail, client, initiator)
+        AuthContext.runAsFull(getAuthDataForUser(userAndClient.userRef)) {
+            createAndUpdateData(mailKind, mail, userAndClient.clientRef, userAndClient.userRef)
         }
     }
 
@@ -208,7 +208,7 @@ class SdEcomMailProcessor(
         }
     }
 
-    private fun getClientByEmailDomain(emailDomain: String): EntityRef {
+    private fun getClientsByEmailDomain(emailDomain: String): List<EntityRef> {
         val query = RecordsQuery.create()
             .withSourceId(AppName.EMODEL + "/" + CLIENT_SK)
             .withLanguage(PredicateService.LANGUAGE_PREDICATE)
@@ -216,23 +216,34 @@ class SdEcomMailProcessor(
                 eq("emailDomain", emailDomain)
             )
             .build()
-        return recordsService.queryOne(query) ?: EntityRef.EMPTY
+        return recordsService.query(query).getRecords()
     }
 
-    private fun lookupUser(client: EntityRef, email: String): EntityRef {
-        if (client == defaultClient) {
-            return getUserByEmail(email)
-        }
-        val clientUsers: ClientUsers = recordsService.getAtts(client, ClientUsers::class.java)
-        for (user in clientUsers.getAllClientUsers()) {
-            if (email.equals(user.email, ignoreCase = true)) {
-                return user.ref
+    private fun lookupUserAndClient(possibleClients: List<EntityRef>, email: String): UserWithClient {
+
+        val clientUsers: List<ClientUsers> = recordsService.getAtts(possibleClients, ClientUsers::class.java)
+
+        for (client in clientUsers) {
+            for (user in client.getAllClientUsers()) {
+                if (email.equals(user.email, ignoreCase = true)) {
+                    return UserWithClient(user.ref, client.id)
+                }
             }
         }
-        return EntityRef.EMPTY
+
+        val defaultClient = this.defaultClient ?: return UserWithClient.EMPTY
+        if (EntityRef.isNotEmpty(defaultClient) && possibleClients.any { it == defaultClient }) {
+            val userRef = getFirstUserByEmail(email)
+            if (userRef.isEmpty()) {
+                return UserWithClient.EMPTY
+            }
+            return UserWithClient(userRef, defaultClient)
+        }
+
+        return UserWithClient.EMPTY
     }
 
-    fun getUserByEmail(email: String?): EntityRef {
+    fun getFirstUserByEmail(email: String): EntityRef {
         val query = RecordsQuery.create()
             .withSourceId(AppName.EMODEL + "/" + PERSON_SK)
             .withLanguage(PredicateService.LANGUAGE_PREDICATE)
@@ -275,6 +286,7 @@ class SdEcomMailProcessor(
 
     @Data
     private class ClientUsers(
+        val id: EntityRef,
         @AttName("users[]")
         val users: List<UserData>?,
         val authGroups: List<GroupData>?
@@ -312,6 +324,19 @@ class SdEcomMailProcessor(
         val userName: String,
         val email: String?
     )
+
+    private class UserWithClient(
+        val userRef: EntityRef,
+        val clientRef: EntityRef
+    ) {
+        companion object {
+            val EMPTY = UserWithClient(EntityRef.EMPTY, EntityRef.EMPTY)
+        }
+
+        fun isEmpty(): Boolean {
+            return userRef.isEmpty() || clientRef.isEmpty()
+        }
+    }
 
     private enum class MailKind {
         NEW,

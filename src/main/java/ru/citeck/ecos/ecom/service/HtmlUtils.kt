@@ -40,9 +40,11 @@ object HtmlUtils {
                         node.replaceWith(newNode)
                     } else {
                         val validAtts = validAttributes[tag] ?: emptySet()
-                        for (att in node.attributes()) {
+                        val iter = node.attributes().iterator()
+                        while (iter.hasNext()) {
+                            val att = iter.next()
                             if (!validAtts.contains(att.key)) {
-                                node.removeAttr(att.key)
+                                iter.remove()
                             }
                         }
                     }
