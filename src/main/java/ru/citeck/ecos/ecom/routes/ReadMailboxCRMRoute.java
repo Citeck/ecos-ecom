@@ -33,7 +33,9 @@ public class ReadMailboxCRMRoute extends RouteBuilder {
                     .when(simple("${exchangeProperty.subject} == 'deal'"))
                         .to("direct:createDeal")
                     .when(simple("${exchangeProperty.subject} == 'other'"))
-                        .to("direct:createOtherDeal");
+                        .to("direct:createOtherDeal")
+                    .when(simple("${exchangeProperty.subject} == 'mail-activity'"))
+                        .to("direct:addMailActivity");
     }
 }
 

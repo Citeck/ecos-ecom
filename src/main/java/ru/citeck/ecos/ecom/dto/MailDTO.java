@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import org.apache.commons.lang3.time.FastDateFormat;
+import ru.citeck.ecos.ecom.processor.mail.EcomMailAttachment;
 import ru.citeck.ecos.webapp.api.entity.EntityRef;
 import java.text.ParseException;
 import java.util.Date;
@@ -23,9 +24,12 @@ public class MailDTO {
     private String from;
     private String fromAddress;
     private String subject;
+    private String body;
     private String content;
     private Date date;
     private String kind;
+    private String dealNumber;
+    private List<EcomMailAttachment> attachments;
 
     @JsonProperty("docs:documents")
     private List<EntityRef> documents;
