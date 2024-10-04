@@ -157,6 +157,7 @@ public class RecordsDaoEndpoint {
             log.error("Failed to mutate record {}", recordAtts, e);
         }
         log.debug("Mutated {}", resultRef.get());
+        exchange.getIn().setBody(resultRef.toString());
     }
 
     /**

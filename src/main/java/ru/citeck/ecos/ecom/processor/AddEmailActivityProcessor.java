@@ -45,16 +45,19 @@ public class AddEmailActivityProcessor implements Processor {
 
     @Override
     public void process(Exchange exchange) throws Exception {
-        MailDTO mail = exchange.getIn().getBody(MailDTO.class);
+        EntityRef dealRef = EntityRef.valueOf(exchange.getIn().getBody(String.class));
+        MailDTO mail = exchange.getVariable("mailDTO", MailDTO.class);
         AuthContext.runAsSystemJ(() ->
             TxnContext.doInTxnJ(() ->
-                processImpl(mail)
+                processImpl(dealRef, mail)
             )
         );
     }
 
-    private void processImpl(MailDTO mail) {
-        EntityRef dealRef = findDeal(mail.getDealNumber());
+    private void processImpl(EntityRef dealRef, MailDTO mail) {
+        if (dealRef.isEmpty()) {
+            dealRef = findDeal(mail.getDealNumber());
+        }
         if (dealRef == null) {
             throw new IllegalStateException("Deal with number " + mail.getDealNumber() + " not found");
         }
