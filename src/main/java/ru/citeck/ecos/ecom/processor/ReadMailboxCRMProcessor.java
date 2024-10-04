@@ -43,10 +43,10 @@ public class ReadMailboxCRMProcessor implements Processor {
     public static final String OTHER_KIND = "other";
     public static final String EMAIL_KIND = "email";
 
-    private static Pattern DEAL_NUMBER;
+    private final Pattern dealNumber;
 
     public ReadMailboxCRMProcessor(@Value("${mail.deal.pattern.dealNumber}") final String dealNumberPattern) {
-        DEAL_NUMBER = Pattern.compile(dealNumberPattern);
+        dealNumber = Pattern.compile(dealNumberPattern);
     }
 
     @Override
@@ -67,7 +67,7 @@ public class ReadMailboxCRMProcessor implements Processor {
         mail.setDate(Date.from(ecomMail.getDate()));
         mail.setAttachments(ecomMail.getAttachments());
 
-        Matcher matcher = DEAL_NUMBER.matcher(ecomMail.getSubject());
+        Matcher matcher = dealNumber.matcher(ecomMail.getSubject());
         if (matcher.find()) {
             exchange.setProperty("subject", "mail-activity");
             mail.setDealNumber(matcher.group(0));
