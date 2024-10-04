@@ -2,24 +2,21 @@ package ru.citeck.ecos.ecom.processor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.Exchange;
-import org.apache.camel.Message;
 import org.apache.camel.Processor;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.citeck.ecos.ecom.dto.MailDTO;
+import ru.citeck.ecos.ecom.processor.mail.EcomMail;
 
-import jakarta.mail.internet.MimeUtility;
-import java.io.UnsupportedEncodingException;
+import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Component
 public class ReadMailboxCRMProcessor implements Processor {
-
-    private static final String MAIL_FROM = "From";
-    private static final String MAIL_SUBJECT = "Subject";
-    private static final String MAIL_DATE = "Date";
 
     @Value("${mail.deal.subject.consult}")
     private String[] dealSubjectsConsult;
@@ -46,26 +43,37 @@ public class ReadMailboxCRMProcessor implements Processor {
     public static final String OTHER_KIND = "other";
     public static final String EMAIL_KIND = "email";
 
+    private final Pattern dealNumber;
+
+    public ReadMailboxCRMProcessor(@Value("${mail.deal.pattern.dealNumber}") final String dealNumberPattern) {
+        dealNumber = Pattern.compile(dealNumberPattern);
+    }
+
     @Override
     public void process(Exchange exchange) throws Exception {
-        if (exchange.getIn().getBody() == null) {
+        EcomMail ecomMail = exchange.getIn().getBody(EcomMail.class);
+        if (StringUtils.isBlank(ecomMail.getContent())) {
             // fail fast
             log.debug("Received exchange with empty body, skipping");
             return;
         }
-        Message message = exchange.getIn();
-        String body = message.getBody(String.class);
 
         MailDTO mail = new MailDTO();
-        mail.setContent(html2text(body));
-        String from = decode(message.getHeader(MAIL_FROM, String.class));
-        mail.setFrom(from);
-        mail.setFromAddress(StringUtils.substringBetween(from, "<", ">"));
-        mail.setSubject(decode(message.getHeader(MAIL_SUBJECT, String.class)));
-        mail.setDate(message.getHeader(MAIL_DATE, String.class));
+        mail.setBody(ecomMail.getContent());
+        mail.setContent(html2text(ecomMail.getContent()));
+        mail.setFrom(ecomMail.getFrom());
+        mail.setFromAddress(ecomMail.getFromAddress());
+        mail.setSubject(ecomMail.getSubject());
+        mail.setDate(Date.from(ecomMail.getDate()));
+        mail.setAttachments(ecomMail.getAttachments());
 
-        exchange.setProperty("subject", "deal");
-        exchange.getIn().setBody(mail);
+        Matcher matcher = dealNumber.matcher(ecomMail.getSubject());
+        if (matcher.find()) {
+            exchange.setProperty("subject", "mail-activity");
+            mail.setDealNumber(matcher.group(0));
+        } else {
+            exchange.setProperty("subject", "deal");
+        }
 
         for (String dealSubject : dealSubjectsConsult) {
             if (mail.getSubject().contains(dealSubject)) {
@@ -79,7 +87,7 @@ public class ReadMailboxCRMProcessor implements Processor {
                 }
             }
         }
-        if (mail.getKind() == null) {
+        if (mail.getKind() == null && mail.getDealNumber() == null) {
             if (mail.getSubject().contains(dealSubjectCommunity))
                 mail.setKind(COMMUNITY_KIND);
             else if (mail.getSubject().contains(dealSubjectPrice))
@@ -95,21 +103,11 @@ public class ReadMailboxCRMProcessor implements Processor {
                 exchange.setProperty("subject", "other");
             }
         }
+
+        exchange.getIn().setBody(mail);
     }
 
     public static String html2text(String html) {
         return Jsoup.parse(html).wholeText();
-    }
-
-    public static String decode(String value) {
-        if (value == null) {
-            return "";
-        }
-        try {
-            return MimeUtility.decodeText(value);
-        }
-        catch (UnsupportedEncodingException ex) {
-            throw new IllegalStateException(ex);
-        }
     }
 }
