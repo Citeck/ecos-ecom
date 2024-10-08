@@ -54,6 +54,7 @@ public class ReadMailboxCRMProcessor implements Processor {
         EcomMail ecomMail = exchange.getIn().getBody(EcomMail.class);
         if (StringUtils.isBlank(ecomMail.getContent())) {
             // fail fast
+            exchange.getIn().setBody("");
             log.debug("Received exchange with empty body, skipping");
             return;
         }
