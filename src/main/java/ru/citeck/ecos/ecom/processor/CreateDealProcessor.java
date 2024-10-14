@@ -7,10 +7,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
 import ru.citeck.ecos.ecom.dto.DealDTO;
 import ru.citeck.ecos.ecom.dto.MailDTO;
+import ru.citeck.ecos.ecom.service.deal.dto.ContactData;
 import ru.citeck.ecos.records2.predicate.PredicateService;
 import ru.citeck.ecos.records2.predicate.model.Predicates;
 import ru.citeck.ecos.records3.RecordsService;
@@ -20,6 +20,7 @@ import ru.citeck.ecos.webapp.api.constants.AppName;
 import ru.citeck.ecos.webapp.api.entity.EntityRef;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -116,7 +117,7 @@ public class CreateDealProcessor implements Processor {
 
         String company = parseDeal(content, DEAL_COMPANY, 0);
         EntityRef counterparty = null;
-        List<ObjectData> contacts = new ArrayList<>();
+        List<ContactData> contacts = new ArrayList<>();
         if (StringUtils.isNotBlank(company)) {
             counterparty = getCounterpartyByName(company);
             if (counterparty != null) {
@@ -130,24 +131,24 @@ public class CreateDealProcessor implements Processor {
 
         deal.setName(company);
 
-        ObjectData contact = ObjectData.create();
+        ContactData contact = new ContactData();
         String contactFio = parseDeal(content, DEAL_FIO, 0);
         if (StringUtils.isNotBlank(contactFio)) {
-            contact.set(CONTACT_FIO_KEY, contactFio);
+            contact.setContactFio(contactFio);
         } else {
-            contact.set(CONTACT_FIO_KEY, deal.getFrom());
+            contact.setContactFio(deal.getFrom());
         }
 
         String contactEmail = parseDeal(content, DEAL_EMAIL, 0);
         if (StringUtils.isNotBlank(contactEmail)) {
-            contact.set(CONTACT_EMAIL_KEY, contactEmail);
+            contact.setContactEmail(contactEmail);
         } else {
-            contact.set(CONTACT_EMAIL_KEY, deal.getFromAddress());
+            contact.setContactEmail(deal.getFromAddress());
         }
 
-        contact.set(CONTACT_POSITION_KEY, parseDeal(content, DEAL_POSITION, 0));
-        contact.set(CONTACT_DEPARTMENT_KEY, parseDeal(content, DEAL_DEPARTMENT, 0));
-        contact.set(CONTACT_PHONE_KEY, parseDeal(content, DEAL_PHONE, 0));
+        contact.setContactPosition(parseDeal(content, DEAL_POSITION, 0));
+        contact.setContactDepartment(parseDeal(content, DEAL_DEPARTMENT, 0));
+        contact.setContactPhone(parseDeal(content, DEAL_PHONE, 0));
         boolean isContactAdded = checkAndAddContact(contacts, contact);
         if (counterparty != null && isContactAdded) {
             updateCounterpartyContacts(counterparty, contacts);
@@ -186,24 +187,23 @@ public class CreateDealProcessor implements Processor {
         }
     }
 
-    private boolean checkAndAddContact(List<ObjectData> contacts, ObjectData contact) {
+    private boolean checkAndAddContact(List<ContactData> contacts, ContactData contact) {
         if (contacts.isEmpty()) {
-            contact.set(CONTACT_MAIN_KEY, true);
+            contact.setContactMain(true);
             contacts.add(contact);
             return true;
         }
 
         boolean contactExist = contacts.stream()
-                .anyMatch(c -> c.get(CONTACT_FIO_KEY).equals(contact.get(CONTACT_FIO_KEY)) &&
-                        c.get(CONTACT_PHONE_KEY).equals(contact.get(CONTACT_PHONE_KEY)) &&
-                        c.get(CONTACT_EMAIL_KEY).equals(contact.get(CONTACT_EMAIL_KEY)));
+                .anyMatch(c -> c.getContactFio().equals(contact.getContactFio()) &&
+                        c.getContactPhone().equals(contact.getContactPhone()) &&
+                        c.getContactEmail().equals(contact.getContactEmail()));
         if (!contactExist) {
-            boolean hasMainContact = contacts.stream()
-                    .anyMatch(c -> c.get(CONTACT_MAIN_KEY).asBoolean());
+            boolean hasMainContact = contacts.stream().anyMatch(ContactData::getContactMain);
             if (hasMainContact) {
-                contact.set(CONTACT_MAIN_KEY, false);
+                contact.setContactMain(false);
             } else {
-                contact.set(CONTACT_MAIN_KEY, true);
+                contact.setContactMain(true);
             }
             contacts.add(contact);
             return true;
@@ -211,7 +211,7 @@ public class CreateDealProcessor implements Processor {
         return false;
     }
 
-    private void updateCounterpartyContacts(EntityRef counterparty, List<ObjectData> contacts) {
+    private void updateCounterpartyContacts(EntityRef counterparty, List<ContactData> contacts) {
         RecordAtts recordAtts = new RecordAtts();
         recordAtts.setId(counterparty);
         recordAtts.setAtt("contacts", contacts);
@@ -247,9 +247,14 @@ public class CreateDealProcessor implements Processor {
         return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
     }
 
-    private List<ObjectData> getContactFromCounterparty(EntityRef counterparty) {
-        return AuthContext.runAsSystem(() ->
-                recordsService.getAtt(counterparty, "contacts[]?json").asList(ObjectData.class));
+    private List<ContactData> getContactFromCounterparty(EntityRef counterparty) {
+        List<ContactData> contacts = AuthContext.runAsSystem(() ->
+            recordsService.getAtt(counterparty, "contacts[]?json").asList(ContactData.class)
+        );
+        if (contacts.size() == 1 && contacts.getFirst().isEmpty()) {
+            return Collections.emptyList();
+        }
+        return contacts;
     }
 
     private String getNameFromCounterparty(EntityRef counterparty) {
