@@ -2,7 +2,7 @@ package ru.citeck.ecos.ecom.dto;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
-import ru.citeck.ecos.commons.data.ObjectData;
+import ru.citeck.ecos.ecom.service.deal.dto.ContactData;
 
 import java.util.Date;
 import java.util.List;
@@ -27,7 +27,7 @@ public class DealDTO {
     private String ymClientId;
     private String emessage;
     private Boolean createdAutomatically;
-    private List<ObjectData> contacts;
+    private List<ContactData> contacts;
 
     public Map<String, String> toMap() {
         ObjectMapper oMapper = new ObjectMapper();
