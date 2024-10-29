@@ -65,8 +65,7 @@ public class AddEmailActivityProcessor implements Processor {
             Map<EntityRef, EcosContentData> createdAttachments = addAttachmentsToDeal(dealRef, mail);
             createMailActivity(dealRef, createdAttachments, mail);
         } catch (Exception e) {
-            log.error("Failed to add mail activity with attachment to deal {}", dealRef);
-            log.error(e.getMessage(), e);
+            log.error("Failed to add mail activity with attachment to deal {}", dealRef, e);
         }
     }
 
