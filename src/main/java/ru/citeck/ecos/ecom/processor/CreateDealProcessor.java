@@ -241,7 +241,7 @@ public class CreateDealProcessor implements Processor {
         RecordsQuery query = RecordsQuery.create()
                 .withSourceId(AppName.EMODEL + "/" + REQUEST_COUNTERPARTY_SK)
                 .withLanguage(PredicateService.LANGUAGE_PREDICATE)
-                .withQuery(Predicates.like("fullOrganizationName", "%" + name + "%"))
+                .withQuery(Predicates.eq("fullOrganizationName", name))
                 .build();
 
         return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
