@@ -86,11 +86,26 @@ public class AddEmailActivityProcessor implements Processor {
                 .set(RecordConstants.ATT_PARENT, deal)
                 .set(RecordConstants.ATT_PARENT_ATT, "docs:documents");
 
-            EntityRef docRef = ecosContentApi.uploadFile()
-                .withEcosType("attachment")
-                .withName(attachment.getName())
-                .withAttributes(docAtts)
-                .writeContentJ(writer -> attachment.readData((writer::writeStream)));
+            EntityRef docRef = attachment.readData(input ->
+                ecosContentApi.uploadFile()
+                    .withEcosType("attachment")
+                    .withName(attachment.getName())
+                    .withAttributes(docAtts)
+                    .writeContentJ(writer -> writer.writeStream(input)),
+                () -> null
+            );
+            if (docRef == null) {
+                Instant mailDate = null;
+                if (mail.getDate() != null) {
+                    mailDate = mail.getDate().toInstant();
+                }
+                log.warn("Attachment content is empty. " +
+                    "Attachment name: {} " +
+                    "Deal ref {} " +
+                    "mail date {}", attachment.getName(), deal, mailDate);
+                continue;
+            }
+
             EcosContentData meta = ecosContentApi.getContent(docRef);
             if (meta == null) {
                 throw new IllegalStateException("Attachment was uploaded, but getContent return null. Mail: " + mail);
