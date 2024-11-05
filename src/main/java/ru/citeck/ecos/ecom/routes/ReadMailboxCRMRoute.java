@@ -24,10 +24,8 @@ public class ReadMailboxCRMRoute extends RouteBuilder {
 
     @Override
     public void configure() {
-        String endPoint = StringUtils.startsWith(imap, "imap")
-                ? imap : "imap://" + imap;
 
-        from(endPoint)
+        from(EcomCamelMailUtils.fromMailUri(this, imap))
                 .autoStartup(!Objects.equals(imap, "disabled"))
                 .to("log:DEBUG?showHeaders=true")
                 .bean(MailBodyExtractor.class, "extract(*)")
