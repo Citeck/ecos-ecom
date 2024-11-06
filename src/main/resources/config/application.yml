@@ -8,10 +8,11 @@ mail:
       consult: Получить консультацию, Консультация на странице, Заявка на странице, Контактная форма
       demonstration: Заказать демонстрацию, Запрос демонстрации
       demo-access: Демо-доступ
-      community: Скачивание Citeck ECOS Community
+      community: Скачивание Citeck ECOS Community, Скачивание Citeck Community
       price: Запрос стоимости
       cloud: Заявка на демо-доступ к Citeck ECOS в облаке
       community-subscription: Подписка на рассылку о Community
+      partnership-request: Стать партнером
     pattern:
       dealNumber: "(?<=Сделка #).*$"
       from: "(?m)(?<=От:).*$"
