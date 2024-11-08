@@ -6,5 +6,9 @@ interface EcomMailAttachment {
 
     fun getName(): String
 
-    fun <T> readData(action: (InputStream) -> T): T
+    /**
+     * Read attachment data
+     * If data is empty, then ifEmpty callback will be invoked
+     */
+    fun <T> readData(action: (InputStream) -> T, ifEmpty: () -> T): T
 }

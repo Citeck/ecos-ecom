@@ -100,13 +100,23 @@ class SdEcomMailProcessor(
                 .set(RecordConstants.ATT_PARENT, sdRequestRef)
                 .set(RecordConstants.ATT_PARENT_ATT, "docs:documents")
 
-            val docRef = ecosContentApi
-                .uploadFile().withEcosType("attachment")
-                .withName(attachment.getName())
-                .withAttributes(docAtts)
-                .writeContent { writer: EcosContentWriter ->
-                    attachment.readData { writer.writeStream(it) }
+            val docRef = attachment.readData({ attachData ->
+                ecosContentApi.uploadFile()
+                    .withEcosType("attachment")
+                    .withName(attachment.getName())
+                    .withAttributes(docAtts)
+                    .writeContent { writer: EcosContentWriter ->
+                        writer.writeStream(attachData)
+                    }
+            }) { null }
+            if (docRef == null) {
+                log.warn {
+                    "Attachment content is empty. " +
+                    "Attachment name: ${attachment.getName()} " +
+                    "SD request $sdRequestRef mail date ${mail.date}"
                 }
+                continue
+            }
             val meta = ecosContentApi.getContent(docRef)
                 ?: error("Attachment was uploaded, but getContent return null. Mail: $mail")
 

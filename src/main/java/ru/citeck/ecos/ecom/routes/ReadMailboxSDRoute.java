@@ -1,7 +1,6 @@
 package ru.citeck.ecos.ecom.routes;
 
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.citeck.ecos.config.lib.consumer.bean.EcosConfig;
@@ -21,10 +20,8 @@ public class ReadMailboxSDRoute extends RouteBuilder {
 
     @Override
     public void configure() {
-        String endPoint = StringUtils.startsWith(imap, "imap")
-                ? imap : "imap://" + imap;
 
-        from(endPoint)
+        from(EcomCamelMailUtils.fromMailUri(this, imap))
                 .autoStartup(!Objects.equals(imap, "disabled"))
                 .to("log:raw-email?level=INFO&showHeaders=true")
                 .bean(MailBodyExtractor.class, "extract(*)")

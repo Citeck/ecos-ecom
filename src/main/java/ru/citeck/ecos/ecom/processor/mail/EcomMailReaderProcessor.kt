@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.time.FastDateFormat
 import ru.citeck.ecos.commons.mime.MimeTypes
 import ru.citeck.ecos.ecom.service.cameldsl.MailBodyExtractor
+import java.io.BufferedInputStream
 import java.io.InputStream
 import java.text.ParseException
 import java.time.Instant
@@ -111,8 +112,16 @@ class EcomMailReaderProcessor : Processor {
             return fileName
         }
 
-        override fun <T> readData(action: (InputStream) -> T): T {
-            return part.inputStream.use(action)
+        override fun <T> readData(action: (InputStream) -> T, ifEmpty: () -> T): T {
+            part.inputStream.use { input ->
+                val stream = BufferedInputStream(input)
+                stream.mark(5)
+                if (stream.read() == -1) {
+                    return ifEmpty.invoke()
+                }
+                stream.reset()
+                return action.invoke(stream)
+            }
         }
     }
 }
