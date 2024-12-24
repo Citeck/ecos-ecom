@@ -8,8 +8,6 @@ import ru.citeck.ecos.ecom.processor.mail.EcomMailReaderProcessor;
 import ru.citeck.ecos.ecom.processor.sd.SdEcomMailProcessor;
 import ru.citeck.ecos.ecom.service.cameldsl.MailBodyExtractor;
 
-import java.util.Objects;
-
 @Component
 public class ReadMailboxSDRoute extends RouteBuilder {
 
@@ -21,8 +19,7 @@ public class ReadMailboxSDRoute extends RouteBuilder {
     @Override
     public void configure() {
 
-        from(EcomCamelMailUtils.fromMailUri(this, imap))
-                .autoStartup(!Objects.equals(imap, "disabled"))
+        EcomCamelMailUtils.fromMailUri(this, imap)
                 .to("log:raw-email?level=INFO&showHeaders=true")
                 .bean(MailBodyExtractor.class, "extract(*)")
                 .process(new EcomMailReaderProcessor())
