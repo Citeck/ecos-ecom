@@ -1,4 +1,4 @@
-![Citeck ECOS Logo](https://raw.githubusercontent.com/Citeck/ecos-ui/develop/public/img/logo/ecos-logo.png)
+![Citeck ECOS Logo](https://raw.githubusercontent.com/Citeck/ecos-ui/develop/public/img/logo/ecos-logo.svg)
 
 # `ecos-ecom`
 
@@ -6,7 +6,7 @@ Welcome to the Citeck `ecos-ecom` repository! The microservice provides a soluti
 
 ## Get started
 
-If you are new to ECOS platform and would like to run the software locally, we recommend you download the Dockerized version from [Demo repository](https://github.com/Citeck/ecos-community-demo).
+If you are new to Citeck platform and would like to run the software locally, we recommend you download the Dockerized version from [Demo repository](https://github.com/Citeck/ecos-community-demo).
 
 ## Useful Links
 
@@ -14,7 +14,7 @@ If you are new to ECOS platform and would like to run the software locally, we r
 
 ## Dependencies
 
-To run this application the following applications from ECOS deployment are needed:
+To run this application the following applications from Citeck deployment are needed:
 
 * zookeeper
 * rabbitmq
@@ -65,7 +65,7 @@ Then, run a Sonar analysis:
 
 ## Contributing
 
-We welcome contributions from the community to make ECOS even better. Everyone interacting in the Citeck project’s codebases, issue trackers, chat rooms, and forum is expected to follow the [contributor code of conduct](https://github.com/rubygems/rubygems/blob/master/CODE_OF_CONDUCT.md).
+We welcome contributions from the community to make Citeck even better. Everyone interacting in the Citeck project’s codebases, issue trackers, chat rooms, and forum is expected to follow the [contributor code of conduct](https://github.com/rubygems/rubygems/blob/master/CODE_OF_CONDUCT.md).
 
 ## Support
 
