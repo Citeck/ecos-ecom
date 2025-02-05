@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import ru.citeck.ecos.commons.data.DataValue;
 import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.commons.json.Json;
+import ru.citeck.ecos.commons.utils.StringUtils;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
 import ru.citeck.ecos.ecom.dto.FindRecordDTO;
 import ru.citeck.ecos.ecom.processor.mail.EcomMail;
@@ -76,7 +77,7 @@ public class AddEmailActivityProcessor implements Processor {
 
     private EntityRef findRecord(FindRecordDTO findRecordDTO) {
         String searchAtt = findRecordDTO.getSearchAtt();
-        if (searchAtt == null) {
+        if (searchAtt == null || StringUtils.isBlank(searchAtt)) {
             searchAtt = RecordConstants.ATT_DOC_NUM;
         }
 

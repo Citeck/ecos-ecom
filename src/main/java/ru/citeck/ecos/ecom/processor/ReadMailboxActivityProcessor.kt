@@ -52,7 +52,7 @@ class ReadMailboxActivityProcessor(
                 .withLanguage(PredicateService.LANGUAGE_PREDICATE)
                 .withQuery(
                     Predicates.and(
-                        Predicates.contains("aspects?str", "\"alias\":\"$alias\""),
+                        Predicates.contains("aspects[]?str|join()", "\"alias\":\"$alias\""),
                     )
                 )
                 .build(),
@@ -71,7 +71,7 @@ class ReadMailboxActivityProcessor(
         val findRecordDTO = FindRecordDTO(
             typeDef.sourceId,
             searchValue,
-            configData["searchAtt"].asText(null)
+            configData["searchAtt"].asText()
         )
         exchange.setVariable(AddEmailActivityProcessor.FIND_RECORD_VARIABLE, findRecordDTO)
     }
