@@ -40,8 +40,8 @@ public class ReadMailboxCRMRoute extends RouteBuilder {
                         .to("direct:addMailActivity")
                 .end()
                 .choice()
-                    .when(simple("${exchangeProperty.subject} != 'mail-activity' && ${variable.mailDTO} != '' " +
-                        "&& ${variable.mailDTO.attachments.size()} > 0"))
+                    .when(simple("${exchangeProperty.subject} != 'mail-activity' && ${variable.mail} != '' " +
+                        "&& ${variable.mail.attachments.size()} > 0"))
                     .to("direct:addMailActivity");
     }
 }
