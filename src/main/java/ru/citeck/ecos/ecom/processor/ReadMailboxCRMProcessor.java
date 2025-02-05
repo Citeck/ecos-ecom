@@ -7,8 +7,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import ru.citeck.ecos.ecom.dto.FindRecordDTO;
 import ru.citeck.ecos.ecom.dto.MailDTO;
 import ru.citeck.ecos.ecom.processor.mail.EcomMail;
+import ru.citeck.ecos.webapp.api.constants.AppName;
 
 import java.util.Date;
 import java.util.regex.Matcher;
@@ -17,6 +19,8 @@ import java.util.regex.Pattern;
 @Slf4j
 @Component
 public class ReadMailboxCRMProcessor implements Processor {
+
+    private static final String DEAL_SOURCE_ID = AppName.EMODEL + "/deal";
 
     @Value("${mail.deal.subject.consult}")
     private String[] dealSubjectsConsult;
@@ -63,7 +67,6 @@ public class ReadMailboxCRMProcessor implements Processor {
         }
 
         MailDTO mail = new MailDTO();
-        mail.setBody(ecomMail.getContent());
         mail.setContent(html2text(ecomMail.getContent()));
         mail.setFrom(ecomMail.getFrom());
         mail.setFromAddress(ecomMail.getFromAddress());
@@ -74,7 +77,14 @@ public class ReadMailboxCRMProcessor implements Processor {
         Matcher matcher = dealNumber.matcher(ecomMail.getSubject());
         if (matcher.find()) {
             exchange.setProperty("subject", "mail-activity");
-            mail.setDealNumber(matcher.group(0));
+            String dealNumber = matcher.group(0);
+            mail.setDealNumber(dealNumber);
+            FindRecordDTO findRecordDTO = new FindRecordDTO(
+                DEAL_SOURCE_ID,
+                dealNumber,
+                "number"
+            );
+            exchange.setVariable(AddEmailActivityProcessor.FIND_RECORD_VARIABLE, findRecordDTO);
         } else {
             exchange.setProperty("subject", "deal");
         }

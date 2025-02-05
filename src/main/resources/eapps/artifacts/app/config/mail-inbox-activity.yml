@@ -1,0 +1,6 @@
+---
+id: mail-inbox-activity
+name:
+  ru: Конфигурация почтового ящика IMAP для чтения писем в Activity Camel Route
+  en: Main inbox IMAP configuration for Activity Camel Route
+value: disabled

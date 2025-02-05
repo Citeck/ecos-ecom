@@ -16,7 +16,6 @@ public class MailDTO {
     private String from;
     private String fromAddress;
     private String subject;
-    private String body;
     private String content;
     private Date date;
     private String kind;
