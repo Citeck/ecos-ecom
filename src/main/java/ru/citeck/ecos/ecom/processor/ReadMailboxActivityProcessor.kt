@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.apache.commons.lang3.StringUtils
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import ru.citeck.ecos.ecom.dto.FindRecordDTO
 import ru.citeck.ecos.ecom.processor.mail.EcomMail
@@ -17,7 +18,8 @@ import ru.citeck.ecos.webapp.lib.model.type.dto.TypeDef
 
 @Component
 class ReadMailboxActivityProcessor(
-    private val recordsService: RecordsService
+    private val recordsService: RecordsService,
+    @Value("\${mail.activity.pattern}") private val regexPattern: String
 ) : Processor {
 
     companion object {
@@ -26,7 +28,7 @@ class ReadMailboxActivityProcessor(
         private val log = KotlinLogging.logger {}
     }
 
-    private val regex = """\((?<key>[^\s:()]+): (?<value>[^\s:()]+)\)$""".toRegex()
+    private val regex: Regex by lazy { regexPattern.toRegex() }
     private val hasActivityAspect = ModelUtils.getAspectRef("has-ecos-activities")
 
     override fun process(exchange: Exchange) {
