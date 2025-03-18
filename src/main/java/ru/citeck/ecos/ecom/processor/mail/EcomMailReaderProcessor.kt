@@ -41,7 +41,11 @@ class EcomMailReaderProcessor : Processor {
         val message = exchange.getIn()
 
         val from = decodeText(message.getHeader(MAIL_FROM, String::class.java))
+        log.debug { "From: '$from'" }
+
         val fromAddress = StringUtils.substringBetween(from, "<", ">")
+        log.debug { "From address: '$fromAddress'" }
+
         val fromDomain: String = getEmailDomain(fromAddress)
 
         val ecomMail = EcomMail(
