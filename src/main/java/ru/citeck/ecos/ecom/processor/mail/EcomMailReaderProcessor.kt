@@ -43,7 +43,11 @@ class EcomMailReaderProcessor : Processor {
         val from = decodeText(message.getHeader(MAIL_FROM, String::class.java))
         log.debug { "From: '$from'" }
 
-        val fromAddress = StringUtils.substringBetween(from, "<", ">")
+        val fromAddress = if (from.contains("<")) {
+            StringUtils.substringBetween(from, "<", ">")
+        } else {
+            from
+        }
         log.debug { "From address: '$fromAddress'" }
 
         val fromDomain: String = getEmailDomain(fromAddress)
