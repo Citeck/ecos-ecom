@@ -4,6 +4,7 @@ import org.apache.camel.builder.RouteBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.citeck.ecos.config.lib.consumer.bean.EcosConfig;
+import ru.citeck.ecos.ecom.processor.AddEmailActivityProcessor;
 import ru.citeck.ecos.ecom.processor.ReadMailboxCRMProcessor;
 import ru.citeck.ecos.ecom.processor.mail.EcomMailReaderProcessor;
 import ru.citeck.ecos.ecom.service.cameldsl.MailBodyExtractor;
@@ -27,8 +28,8 @@ public class ReadMailboxCRMRoute extends RouteBuilder {
                 .bean(MailBodyExtractor.class, "extract(*)")
                 .process(new EcomMailReaderProcessor())
                 .to("log:parsed-email?level=DEBUG")
+                .setVariable(AddEmailActivityProcessor.MAIL_VARIABLE, simple("${body}"))
                 .process(readMailboxCRMProcessor)
-                .setVariable("mailDTO", simple("${body}"))
                 .choice()
                     .when(simple("${exchangeProperty.subject} == 'deal'"))
                         .to("direct:createDeal")
@@ -39,8 +40,8 @@ public class ReadMailboxCRMRoute extends RouteBuilder {
                         .to("direct:addMailActivity")
                 .end()
                 .choice()
-                    .when(simple("${exchangeProperty.subject} != 'mail-activity' && ${variable.mailDTO} != '' " +
-                        "&& ${variable.mailDTO.attachments.size()} > 0"))
+                    .when(simple("${exchangeProperty.subject} != 'mail-activity' && ${variable.mail} != '' " +
+                        "&& ${variable.mail.attachments.size()} > 0"))
                     .to("direct:addMailActivity");
     }
 }

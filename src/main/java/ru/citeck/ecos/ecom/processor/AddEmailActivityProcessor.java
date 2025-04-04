@@ -8,8 +8,10 @@ import org.springframework.stereotype.Component;
 import ru.citeck.ecos.commons.data.DataValue;
 import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.commons.json.Json;
+import ru.citeck.ecos.commons.utils.StringUtils;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
-import ru.citeck.ecos.ecom.dto.MailDTO;
+import ru.citeck.ecos.ecom.dto.FindRecordDTO;
+import ru.citeck.ecos.ecom.processor.mail.EcomMail;
 import ru.citeck.ecos.ecom.processor.mail.EcomMailAttachment;
 import ru.citeck.ecos.records2.RecordConstants;
 import ru.citeck.ecos.records2.predicate.PredicateService;
@@ -22,7 +24,6 @@ import ru.citeck.ecos.webapp.api.content.EcosContentApi;
 import ru.citeck.ecos.webapp.api.content.EcosContentData;
 import ru.citeck.ecos.webapp.api.entity.EntityRef;
 
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,79 +31,87 @@ import java.util.Map;
 @Component
 public class AddEmailActivityProcessor implements Processor {
 
-    private static final String DEAL_SOURCE_ID = AppName.EMODEL + "/deal";
     private static final String ACTIVITY_SOURCE_ID = AppName.EMODEL + "/activity";
+    public static final String MAIL_VARIABLE = "mail";
+    public static final String FIND_RECORD_VARIABLE = "findRecord";
 
     private final RecordsService recordsService;
     private final EcosContentApi ecosContentApi;
 
     public AddEmailActivityProcessor(
         @NonNull RecordsService recordsService,
-        @NonNull EcosContentApi ecosContentApi) {
+        @NonNull EcosContentApi ecosContentApi
+    ) {
         this.recordsService = recordsService;
         this.ecosContentApi = ecosContentApi;
     }
 
     @Override
     public void process(Exchange exchange) throws Exception {
-        EntityRef dealRef = EntityRef.valueOf(exchange.getIn().getBody(String.class));
-        MailDTO mail = exchange.getVariable("mailDTO", MailDTO.class);
+        EntityRef record = EntityRef.valueOf(exchange.getIn().getBody(String.class));
+        EcomMail mail = exchange.getVariable(MAIL_VARIABLE, EcomMail.class);
         AuthContext.runAsSystemJ(() ->
             TxnContext.doInTxnJ(() ->
-                processImpl(dealRef, mail)
+                processImpl(record, mail, exchange)
             )
         );
     }
 
-    private void processImpl(EntityRef dealRef, MailDTO mail) {
-        if (dealRef.isEmpty()) {
-            dealRef = findDeal(mail.getDealNumber());
+    private void processImpl(EntityRef record, EcomMail mail, Exchange exchange) {
+        if (record.isEmpty()) {
+            FindRecordDTO findRecordDTO = exchange.getVariable(FIND_RECORD_VARIABLE, FindRecordDTO.class);
+            record = findRecord(findRecordDTO);
+
+            if (record == null) {
+                throw new IllegalStateException("Record with data " + findRecordDTO + " not found");
+            }
         }
-        if (dealRef == null) {
-            throw new IllegalStateException("Deal with number " + mail.getDealNumber() + " not found");
-        }
+
         try {
-            Map<EntityRef, EcosContentData> createdAttachments = addAttachmentsToDeal(dealRef, mail);
-            createMailActivity(dealRef, createdAttachments, mail);
+            Map<EntityRef, EcosContentData> createdAttachments = addAttachmentsToRecord(record, mail);
+            createMailActivity(record, createdAttachments, mail);
         } catch (Exception e) {
-            log.error("Failed to add mail activity with attachment to deal {}", dealRef, e);
+            log.error("Failed to add mail activity with attachment to record {}", record, e);
         }
     }
 
-    private EntityRef findDeal(String dealNumber) {
+    private EntityRef findRecord(FindRecordDTO findRecordDTO) {
+        String searchAtt = findRecordDTO.getSearchAtt();
+        if (searchAtt == null || StringUtils.isBlank(searchAtt)) {
+            searchAtt = RecordConstants.ATT_DOC_NUM;
+        }
+
         return recordsService.queryOne(
             RecordsQuery.create()
-                .withSourceId(DEAL_SOURCE_ID)
+                .withSourceId(findRecordDTO.getSourceId())
                 .withLanguage(PredicateService.LANGUAGE_PREDICATE)
-                .withQuery(Predicates.eq("number", dealNumber))
+                .withQuery(
+                    Predicates.eq(searchAtt, findRecordDTO.getSearchValue())
+                )
                 .build()
         );
     }
 
-    private Map<EntityRef, EcosContentData> addAttachmentsToDeal(EntityRef deal, MailDTO mail) {
+    private Map<EntityRef, EcosContentData> addAttachmentsToRecord(EntityRef record, EcomMail mail) {
         Map<EntityRef, EcosContentData> createdAttachments = new HashMap<>();
         for (EcomMailAttachment attachment : mail.getAttachments()) {
             DataValue docAtts = DataValue.createObj()
-                .set(RecordConstants.ATT_PARENT, deal)
+                .set(RecordConstants.ATT_PARENT, record)
                 .set(RecordConstants.ATT_PARENT_ATT, "docs:documents");
 
             EntityRef docRef = attachment.readData(input ->
-                ecosContentApi.uploadFile()
-                    .withEcosType("attachment")
-                    .withName(attachment.getName())
-                    .withAttributes(docAtts)
-                    .writeContentJ(writer -> writer.writeStream(input)),
+                    ecosContentApi.uploadFile()
+                        .withEcosType("attachment")
+                        .withName(attachment.getName())
+                        .withAttributes(docAtts)
+                        .writeContentJ(writer -> writer.writeStream(input)),
                 () -> null
             );
             if (docRef == null) {
-                Instant mailDate = null;
-                if (mail.getDate() != null) {
-                    mailDate = mail.getDate().toInstant();
-                }
                 log.warn("Attachment content is empty. " +
                     "Attachment name: {} " +
-                    "Deal ref {} " +
-                    "mail date {}", attachment.getName(), deal, mailDate);
+                    "Record ref {} " +
+                    "mail date {}", attachment.getName(), record, mail.getDate());
                 continue;
             }
 
@@ -110,16 +119,15 @@ public class AddEmailActivityProcessor implements Processor {
             if (meta == null) {
                 throw new IllegalStateException("Attachment was uploaded, but getContent return null. Mail: " + mail);
             }
-            log.debug("Saved document: {} - {} in deal {}", attachment.getName(), docRef, deal);
+            log.debug("Saved document: {} - {} in record {}", attachment.getName(), docRef, record);
 
             createdAttachments.put(docRef, meta);
         }
         return createdAttachments;
     }
 
-    private void createMailActivity(EntityRef deal, Map<EntityRef, EcosContentData> createdAttachments, MailDTO mail) {
-        String manager = recordsService.getAtt(deal, "manager?id").asText();
-        StringBuilder text = new StringBuilder(mail.getBody());
+    private void createMailActivity(EntityRef record, Map<EntityRef, EcosContentData> createdAttachments, EcomMail mail) {
+        StringBuilder text = new StringBuilder(mail.getContent());
         if (!createdAttachments.isEmpty()) {
             createdAttachments.forEach((docRef, meta) -> {
                 text.append("<p><span>");
@@ -134,15 +142,13 @@ public class AddEmailActivityProcessor implements Processor {
             });
         }
 
-        Instant activityDate = Instant.ofEpochMilli(mail.getDate().getTime());
         ObjectData attributes = ObjectData.create()
             .set("_type", "email-activity")
-            .set("activityDate", activityDate)
-            .set("responsible", manager)
+            .set("activityDate", mail.getDate())
             .set("text", text)
-            .set(RecordConstants.ATT_PARENT, deal)
+            .set(RecordConstants.ATT_PARENT, record)
             .set(RecordConstants.ATT_PARENT_ATT, "has-ecos-activities:ecosActivities");
         EntityRef activityRef = recordsService.create(ACTIVITY_SOURCE_ID, attributes);
-        log.debug("Email activity created: {} in deal {}", activityRef, deal);
+        log.debug("Email activity created: {} in record {}", activityRef, record);
     }
 }
