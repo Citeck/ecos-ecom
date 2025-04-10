@@ -31,35 +31,28 @@ import static ru.citeck.ecos.ecom.processor.ReadMailboxCRMProcessor.EMAIL_KIND;
 @Component
 public class CreateDealProcessor implements Processor {
     private static Pattern DEAL_FROM;
-            //Pattern.compile("(?m)(?<=От:).*$");
+    //Pattern.compile("(?m)(?<=От:).*$");
     private static Pattern DEAL_SUBJECT;
-            //Pattern.compile("(?m)(?<=Тема:).*$");
+    //Pattern.compile("(?m)(?<=Тема:).*$");
     private static Pattern DEAL_COMPANY;
-            //Pattern.compile("(?m)(?<=Компания:).*$");
+    //Pattern.compile("(?m)(?<=Компания:).*$");
     private static Pattern DEAL_FIO;
-            //Pattern.compile("(?m)(?<=ФИО:).*$");
+    //Pattern.compile("(?m)(?<=ФИО:).*$");
     private static Pattern DEAL_POSITION;
-            //Pattern.compile("(?m)(?<=Должность:).*$");
+    //Pattern.compile("(?m)(?<=Должность:).*$");
     private static Pattern DEAL_DEPARTMENT;
-            //Pattern.compile("(?m)(?<=Департамент:).*$");
+    //Pattern.compile("(?m)(?<=Департамент:).*$");
     private static Pattern DEAL_PHONE;
-            //Pattern.compile("(?m)(?<=Телефон:).*$");
+    //Pattern.compile("(?m)(?<=Телефон:).*$");
     private static Pattern DEAL_EMAIL;
-            //Pattern.compile("(?m)(?<=E-mail:).*$");
+    //Pattern.compile("(?m)(?<=E-mail:).*$");
     private static Pattern DEAL_COMMENT;
-            //Pattern.compile( "Комментарий:([\\s\\S\\n]+)Страница перехода");
+    //Pattern.compile( "Комментарий:([\\s\\S\\n]+)Страница перехода");
     private static Pattern DEAL_SITE_FROM;
-            //Pattern.compile("(?m)(?<=Количество пользователей:).*$");
+    //Pattern.compile("(?m)(?<=Количество пользователей:).*$");
     private static Pattern DEAL_NUMBER_OF_USERS;
     private static Pattern GA_CLIENT_ID;
     private static Pattern YM_CLIENT_ID;
-
-    private static final String CONTACT_FIO_KEY = "contactFio";
-    private static final String CONTACT_POSITION_KEY = "contactPosition";
-    private static final String CONTACT_DEPARTMENT_KEY = "contactDepartment";
-    private static final String CONTACT_PHONE_KEY = "contactPhone";
-    private static final String CONTACT_EMAIL_KEY = "contactEmail";
-    private static final String CONTACT_MAIN_KEY = "contactMain";
 
     private static final String REQUEST_CATEGORY_SK = "deal-request-category";
     private static final String REQUEST_COUNTERPARTY_SK = "ecos-counterparty";
@@ -82,19 +75,19 @@ public class CreateDealProcessor implements Processor {
                                 @Value("${mail.deal.pattern.numberOfUsers}") final String dealNumberOfUsers,
                                 @Value("${mail.deal.pattern.gaClientId}") final String gaClientId,
                                 @Value("${mail.deal.pattern.ymClientId}") final String ymClientId) {
-        DEAL_FROM =  Pattern.compile(dealFrom);
-        DEAL_COMPANY =  Pattern.compile(dealCompany);
-        DEAL_SUBJECT =  Pattern.compile(dealSubject);
-        DEAL_FIO =  Pattern.compile(dealFio);
+        DEAL_FROM = Pattern.compile(dealFrom);
+        DEAL_COMPANY = Pattern.compile(dealCompany);
+        DEAL_SUBJECT = Pattern.compile(dealSubject);
+        DEAL_FIO = Pattern.compile(dealFio);
         DEAL_POSITION = Pattern.compile(dealPosition);
         DEAL_DEPARTMENT = Pattern.compile(dealDepartment);
-        DEAL_PHONE =  Pattern.compile(dealPhone);
-        DEAL_EMAIL =  Pattern.compile(dealEmail);
-        DEAL_COMMENT =  Pattern.compile(dealComment);
-        DEAL_SITE_FROM =  Pattern.compile(dealSiteFrom);
+        DEAL_PHONE = Pattern.compile(dealPhone);
+        DEAL_EMAIL = Pattern.compile(dealEmail);
+        DEAL_COMMENT = Pattern.compile(dealComment);
+        DEAL_SITE_FROM = Pattern.compile(dealSiteFrom);
         DEAL_NUMBER_OF_USERS = Pattern.compile(dealNumberOfUsers);
-        GA_CLIENT_ID =  Pattern.compile(gaClientId);
-        YM_CLIENT_ID =  Pattern.compile(ymClientId);
+        GA_CLIENT_ID = Pattern.compile(gaClientId);
+        YM_CLIENT_ID = Pattern.compile(ymClientId);
     }
 
     @Override
@@ -112,6 +105,7 @@ public class CreateDealProcessor implements Processor {
         deal.setNumberOfUsers(parseDeal(content, DEAL_NUMBER_OF_USERS, 0));
         deal.setDateReceived(mail.getDate());
         deal.setEmessage(mail.getContent());
+        deal.setDescription("<b>Почтовое сообщение:</b><br>" + mail.getContent());
         deal.setGaClientId(parseDeal(content, GA_CLIENT_ID, 0));
         deal.setYmClientId(parseDeal(content, YM_CLIENT_ID, 0));
 
@@ -195,9 +189,9 @@ public class CreateDealProcessor implements Processor {
         }
 
         boolean contactExist = contacts.stream()
-                .anyMatch(c -> c.getContactFio().equals(contact.getContactFio()) &&
-                        c.getContactPhone().equals(contact.getContactPhone()) &&
-                        c.getContactEmail().equals(contact.getContactEmail()));
+            .anyMatch(c -> c.getContactFio().equals(contact.getContactFio()) &&
+                c.getContactPhone().equals(contact.getContactPhone()) &&
+                c.getContactEmail().equals(contact.getContactEmail()));
         if (!contactExist) {
             boolean hasMainContact = contacts.stream().anyMatch(ContactData::getContactMain);
             if (hasMainContact) {
@@ -220,29 +214,29 @@ public class CreateDealProcessor implements Processor {
 
     private EntityRef getRequestCategoryById(String id) {
         RecordsQuery query = RecordsQuery.create()
-                .withSourceId(AppName.EMODEL + "/" + REQUEST_CATEGORY_SK)
-                .withLanguage(PredicateService.LANGUAGE_PREDICATE)
-                .withQuery(Predicates.eq("id", id))
-                .build();
+            .withSourceId(AppName.EMODEL + "/" + REQUEST_CATEGORY_SK)
+            .withLanguage(PredicateService.LANGUAGE_PREDICATE)
+            .withQuery(Predicates.eq("id", id))
+            .build();
 
         return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
     }
 
     private EntityRef getMailRequestSource() {
         RecordsQuery query = RecordsQuery.create()
-                .withSourceId(AppName.EMODEL + "/" + REQUEST_SOURCE_SK)
-                .withLanguage(PredicateService.LANGUAGE_PREDICATE)
-                .withQuery(Predicates.eq("id", MAIL_REQUEST_SOURCE_TYPE))
-                .build();
+            .withSourceId(AppName.EMODEL + "/" + REQUEST_SOURCE_SK)
+            .withLanguage(PredicateService.LANGUAGE_PREDICATE)
+            .withQuery(Predicates.eq("id", MAIL_REQUEST_SOURCE_TYPE))
+            .build();
         return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
     }
 
     private EntityRef getCounterpartyByName(String name) {
         RecordsQuery query = RecordsQuery.create()
-                .withSourceId(AppName.EMODEL + "/" + REQUEST_COUNTERPARTY_SK)
-                .withLanguage(PredicateService.LANGUAGE_PREDICATE)
-                .withQuery(Predicates.eq("fullOrganizationName", name))
-                .build();
+            .withSourceId(AppName.EMODEL + "/" + REQUEST_COUNTERPARTY_SK)
+            .withLanguage(PredicateService.LANGUAGE_PREDICATE)
+            .withQuery(Predicates.eq("fullOrganizationName", name))
+            .build();
 
         return AuthContext.runAsSystem(() -> recordsService.queryOne(query));
     }

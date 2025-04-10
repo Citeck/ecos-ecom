@@ -17,6 +17,7 @@ public class DealDTO {
     private String name;
     private String counterparty;
     private String comment;
+    private String description;
     private Date dateReceived;
     private String status = "new";
     private String requestCategory;
