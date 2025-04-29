@@ -1,4 +1,4 @@
-package ru.citeck.ecos.ecom.service.deal;
+package ru.citeck.ecos.ecom.service.crm;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -9,9 +9,9 @@ import ru.citeck.ecos.commons.data.DataValue;
 import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.commons.utils.StringUtils;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
-import ru.citeck.ecos.ecom.service.deal.dto.AttInfo;
-import ru.citeck.ecos.ecom.service.deal.dto.ContactData;
-import ru.citeck.ecos.ecom.service.deal.dto.MergeInfo;
+import ru.citeck.ecos.ecom.service.crm.dto.AttInfo;
+import ru.citeck.ecos.ecom.service.crm.dto.ContactData;
+import ru.citeck.ecos.ecom.service.crm.dto.MergeInfo;
 import ru.citeck.ecos.records2.RecordConstants;
 import ru.citeck.ecos.records2.predicate.PredicateService;
 import ru.citeck.ecos.records2.predicate.model.Predicates;
@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static ru.citeck.ecos.ecom.service.deal.DealSyncRequestSourceJob.SYNC_REQUEST_SOURCE_COUNT_ATT;
+import static ru.citeck.ecos.ecom.service.crm.LeadSyncRequestSourceJob.SYNC_REQUEST_SOURCE_COUNT_ATT;
 
 @Component
 @Slf4j
@@ -58,7 +58,7 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
 
     private static final Pattern COMMENT_MERGED_MARK = Pattern.compile("Комментрий от [0-9]{2}.[0-9]{2}.[0-9]{4} из сделки [0-9]+");
     private static final DateTimeFormatter COMMENT_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy")
-            .withZone(ZoneId.systemDefault());
+        .withZone(ZoneId.systemDefault());
 
     private final RecordsService recordsService;
 
@@ -162,17 +162,17 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
 
     private RecsQueryRes<EntityRef> getCommentsByRecord(String recordId) {
         RecordsQuery query = RecordsQuery.create()
-                .withSourceId(AppName.EMODEL + "/" + COMMENT_SK)
-                .withLanguage(PredicateService.LANGUAGE_PREDICATE)
-                .withQuery(Predicates.eq("record", recordId))
-                .build();
+            .withSourceId(AppName.EMODEL + "/" + COMMENT_SK)
+            .withLanguage(PredicateService.LANGUAGE_PREDICATE)
+            .withQuery(Predicates.eq("record", recordId))
+            .build();
         return recordsService.query(query);
     }
 
     private String addToCommentMergedMark(String text, String createdDate, String number) {
         return text + "<p><br></p><p><br></p><p><span>" +
-                "Комментрий от " + createdDate + " из сделки " + number +
-                "</span></p>";
+            "Комментрий от " + createdDate + " из сделки " + number +
+            "</span></p>";
     }
 
     private void mergeActivities(MergeInfo mergeInfo) {
@@ -269,7 +269,7 @@ public class MergeDealRecordsDao implements ValueMutateDao<MergeInfo> {
 
     private void addMergeResultComment(MergeInfo mergeInfo) {
         List<AttInfo> attsInfo = recordsService.getAtt(mergeInfo.getMergeFrom(), "_type.model.attributes[]?json")
-                .asList(AttInfo.class);
+            .asList(AttInfo.class);
 
         StringBuilder sb = new StringBuilder();
         sb.append("<p><span>Сделка объединена успешно.</span></p>");

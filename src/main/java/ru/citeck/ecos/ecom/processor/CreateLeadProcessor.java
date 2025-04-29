@@ -8,9 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.citeck.ecos.context.lib.auth.AuthContext;
-import ru.citeck.ecos.ecom.dto.DealDTO;
+import ru.citeck.ecos.ecom.dto.LeadDTO;
 import ru.citeck.ecos.ecom.dto.MailDTO;
-import ru.citeck.ecos.ecom.service.deal.dto.ContactData;
+import ru.citeck.ecos.ecom.service.crm.dto.ContactData;
 import ru.citeck.ecos.records2.predicate.PredicateService;
 import ru.citeck.ecos.records2.predicate.model.Predicates;
 import ru.citeck.ecos.records3.RecordsService;
@@ -29,28 +29,28 @@ import static ru.citeck.ecos.ecom.processor.ReadMailboxCRMProcessor.EMAIL_KIND;
 
 @Slf4j
 @Component
-public class CreateDealProcessor implements Processor {
-    private static Pattern DEAL_FROM;
+public class CreateLeadProcessor implements Processor {
+    private static Pattern LEAD_FROM;
     //Pattern.compile("(?m)(?<=От:).*$");
-    private static Pattern DEAL_SUBJECT;
+    private static Pattern LEAD_SUBJECT;
     //Pattern.compile("(?m)(?<=Тема:).*$");
-    private static Pattern DEAL_COMPANY;
+    private static Pattern LEAD_COMPANY;
     //Pattern.compile("(?m)(?<=Компания:).*$");
-    private static Pattern DEAL_FIO;
+    private static Pattern LEAD_FIO;
     //Pattern.compile("(?m)(?<=ФИО:).*$");
-    private static Pattern DEAL_POSITION;
+    private static Pattern LEAD_POSITION;
     //Pattern.compile("(?m)(?<=Должность:).*$");
-    private static Pattern DEAL_DEPARTMENT;
+    private static Pattern LEAD_DEPARTMENT;
     //Pattern.compile("(?m)(?<=Департамент:).*$");
-    private static Pattern DEAL_PHONE;
+    private static Pattern LEAD_PHONE;
     //Pattern.compile("(?m)(?<=Телефон:).*$");
-    private static Pattern DEAL_EMAIL;
+    private static Pattern LEAD_EMAIL;
     //Pattern.compile("(?m)(?<=E-mail:).*$");
-    private static Pattern DEAL_COMMENT;
+    private static Pattern LEAD_COMMENT;
     //Pattern.compile( "Комментарий:([\\s\\S\\n]+)Страница перехода");
-    private static Pattern DEAL_SITE_FROM;
+    private static Pattern LEAD_SITE_FROM;
     //Pattern.compile("(?m)(?<=Количество пользователей:).*$");
-    private static Pattern DEAL_NUMBER_OF_USERS;
+    private static Pattern LEAD_NUMBER_OF_USERS;
     private static Pattern GA_CLIENT_ID;
     private static Pattern YM_CLIENT_ID;
 
@@ -62,30 +62,30 @@ public class CreateDealProcessor implements Processor {
 
     private RecordsService recordsService;
 
-    private CreateDealProcessor(@Value("${mail.deal.pattern.from}") final String dealFrom,
-                                @Value("${mail.deal.pattern.company}") final String dealCompany,
-                                @Value("${mail.deal.pattern.subject}") final String dealSubject,
-                                @Value("${mail.deal.pattern.fio}") final String dealFio,
-                                @Value("${mail.deal.pattern.position}") final String dealPosition,
-                                @Value("${mail.deal.pattern.department}") final String dealDepartment,
-                                @Value("${mail.deal.pattern.phone}") final String dealPhone,
-                                @Value("${mail.deal.pattern.email}") final String dealEmail,
-                                @Value("${mail.deal.pattern.comment}") final String dealComment,
-                                @Value("${mail.deal.pattern.siteFrom}") final String dealSiteFrom,
-                                @Value("${mail.deal.pattern.numberOfUsers}") final String dealNumberOfUsers,
-                                @Value("${mail.deal.pattern.gaClientId}") final String gaClientId,
-                                @Value("${mail.deal.pattern.ymClientId}") final String ymClientId) {
-        DEAL_FROM = Pattern.compile(dealFrom);
-        DEAL_COMPANY = Pattern.compile(dealCompany);
-        DEAL_SUBJECT = Pattern.compile(dealSubject);
-        DEAL_FIO = Pattern.compile(dealFio);
-        DEAL_POSITION = Pattern.compile(dealPosition);
-        DEAL_DEPARTMENT = Pattern.compile(dealDepartment);
-        DEAL_PHONE = Pattern.compile(dealPhone);
-        DEAL_EMAIL = Pattern.compile(dealEmail);
-        DEAL_COMMENT = Pattern.compile(dealComment);
-        DEAL_SITE_FROM = Pattern.compile(dealSiteFrom);
-        DEAL_NUMBER_OF_USERS = Pattern.compile(dealNumberOfUsers);
+    private CreateLeadProcessor(@Value("${mail.lead.pattern.from}") final String from,
+                                @Value("${mail.lead.pattern.company}") final String company,
+                                @Value("${mail.lead.pattern.subject}") final String subject,
+                                @Value("${mail.lead.pattern.fio}") final String fio,
+                                @Value("${mail.lead.pattern.position}") final String position,
+                                @Value("${mail.lead.pattern.department}") final String department,
+                                @Value("${mail.lead.pattern.phone}") final String phone,
+                                @Value("${mail.lead.pattern.email}") final String email,
+                                @Value("${mail.lead.pattern.comment}") final String comment,
+                                @Value("${mail.lead.pattern.siteFrom}") final String siteFrom,
+                                @Value("${mail.lead.pattern.numberOfUsers}") final String numberOfUsers,
+                                @Value("${mail.lead.pattern.gaClientId}") final String gaClientId,
+                                @Value("${mail.lead.pattern.ymClientId}") final String ymClientId) {
+        LEAD_FROM = Pattern.compile(from);
+        LEAD_COMPANY = Pattern.compile(company);
+        LEAD_SUBJECT = Pattern.compile(subject);
+        LEAD_FIO = Pattern.compile(fio);
+        LEAD_POSITION = Pattern.compile(position);
+        LEAD_DEPARTMENT = Pattern.compile(department);
+        LEAD_PHONE = Pattern.compile(phone);
+        LEAD_EMAIL = Pattern.compile(email);
+        LEAD_COMMENT = Pattern.compile(comment);
+        LEAD_SITE_FROM = Pattern.compile(siteFrom);
+        LEAD_NUMBER_OF_USERS = Pattern.compile(numberOfUsers);
         GA_CLIENT_ID = Pattern.compile(gaClientId);
         YM_CLIENT_ID = Pattern.compile(ymClientId);
     }
@@ -96,81 +96,79 @@ public class CreateDealProcessor implements Processor {
         String content = mail.getContent();
         log.debug("mail content: " + content);
 
-        DealDTO deal = new DealDTO();
-        deal.setFromAddress(mail.getFromAddress());
-        deal.setFrom(parseDeal(content, DEAL_FROM, 0));
-        deal.setSubject(parseDeal(content, DEAL_SUBJECT, 0));
-        deal.setComment(parseDeal(content, DEAL_COMMENT, 1));
-        deal.setSiteFrom(parseDeal(content, DEAL_SITE_FROM, 0));
-        deal.setNumberOfUsers(parseDeal(content, DEAL_NUMBER_OF_USERS, 0));
-        deal.setDateReceived(mail.getDate());
-        deal.setEmessage(mail.getContent());
-        deal.setDescription("<b>Почтовое сообщение:</b><br>" + mail.getContent());
-        deal.setGaClientId(parseDeal(content, GA_CLIENT_ID, 0));
-        deal.setYmClientId(parseDeal(content, YM_CLIENT_ID, 0));
+        String description = parseLead(content, LEAD_COMMENT, 1);
+        description += "<br><b>Почтовое сообщение:</b><br>" + mail.getContent();
 
-        String company = parseDeal(content, DEAL_COMPANY, 0);
+        LeadDTO leadDto = new LeadDTO();
+        leadDto.setFromAddress(mail.getFromAddress());
+        leadDto.setFrom(parseLead(content, LEAD_FROM, 0));
+        leadDto.setSubject(parseLead(content, LEAD_SUBJECT, 0));
+        leadDto.setSiteFrom(parseLead(content, LEAD_SITE_FROM, 0));
+        leadDto.setNumberOfUsers(parseLead(content, LEAD_NUMBER_OF_USERS, 0));
+        leadDto.setDateReceived(mail.getDate());
+        leadDto.setEmessage(mail.getContent());
+        leadDto.setDescription(description);
+        leadDto.setGaClientId(parseLead(content, GA_CLIENT_ID, 0));
+        leadDto.setYmClientId(parseLead(content, YM_CLIENT_ID, 0));
+
+        String company = parseLead(content, LEAD_COMPANY, 0);
         EntityRef counterparty = null;
         List<ContactData> contacts = new ArrayList<>();
         if (StringUtils.isNotBlank(company)) {
             counterparty = getCounterpartyByName(company);
             if (counterparty != null) {
-                deal.setCounterparty(counterparty.getAsString());
-                deal.setCompany(getNameFromCounterparty(counterparty));
+                leadDto.setCounterparty(counterparty.getAsString());
+                leadDto.setCompany(getNameFromCounterparty(counterparty));
                 contacts.addAll(getContactFromCounterparty(counterparty));
             } else {
-                deal.setCompany(company);
+                leadDto.setCompany(company);
             }
         }
 
-        deal.setName(company);
+        leadDto.setName(company);
 
         ContactData contact = new ContactData();
-        String contactFio = parseDeal(content, DEAL_FIO, 0);
+        String contactFio = parseLead(content, LEAD_FIO, 0);
         if (StringUtils.isNotBlank(contactFio)) {
             contact.setContactFio(contactFio);
         } else {
-            contact.setContactFio(deal.getFrom());
+            contact.setContactFio(leadDto.getFrom());
         }
 
-        String contactEmail = parseDeal(content, DEAL_EMAIL, 0);
+        String contactEmail = parseLead(content, LEAD_EMAIL, 0);
         if (StringUtils.isNotBlank(contactEmail)) {
             contact.setContactEmail(contactEmail);
         } else {
-            contact.setContactEmail(deal.getFromAddress());
+            contact.setContactEmail(leadDto.getFromAddress());
         }
 
-        contact.setContactPosition(parseDeal(content, DEAL_POSITION, 0));
-        contact.setContactDepartment(parseDeal(content, DEAL_DEPARTMENT, 0));
-        contact.setContactPhone(parseDeal(content, DEAL_PHONE, 0));
+        contact.setContactPosition(parseLead(content, LEAD_POSITION, 0));
+        contact.setContactDepartment(parseLead(content, LEAD_DEPARTMENT, 0));
+        contact.setContactPhone(parseLead(content, LEAD_PHONE, 0));
         boolean isContactAdded = checkAndAddContact(contacts, contact);
         if (counterparty != null && isContactAdded) {
             updateCounterpartyContacts(counterparty, contacts);
         }
-        deal.setContacts(contacts);
+        leadDto.setContacts(contacts);
 
         String kind = mail.getKind();
-        if (StringUtils.isBlank(deal.getYmClientId()) && StringUtils.isBlank(deal.getGaClientId())) {
+        if (StringUtils.isBlank(leadDto.getYmClientId()) && StringUtils.isBlank(leadDto.getGaClientId())) {
             kind = EMAIL_KIND;
             EntityRef requestSource = getMailRequestSource();
-            deal.setRequestSource(requestSource.getAsString());
+            leadDto.setRequestSource(requestSource.getAsString());
         }
         EntityRef requestCategory = getRequestCategoryById(kind);
         if (requestCategory != null) {
-            deal.setRequestCategory(requestCategory.getAsString());
+            leadDto.setRequestCategory(requestCategory.getAsString());
         }
 
-        if (exchange.getProperty("subject").equals("deal")) {
-            deal.setCreatedAutomatically(true);
-        } else {
-            deal.setCreatedAutomatically(false);
-        }
+        leadDto.setCreatedAutomatically(exchange.getProperty("subject").equals("lead"));
 
-        log.debug("deal: " + deal);
-        exchange.getIn().setBody(deal.toMap());
+        log.debug("lead: " + leadDto);
+        exchange.getIn().setBody(leadDto.toMap());
     }
 
-    private String parseDeal(String content, Pattern p, Integer group) {
+    private String parseLead(String content, Pattern p, Integer group) {
         try {
             Matcher m = p.matcher(content);
             if (m.find()) {

@@ -20,23 +20,23 @@ import java.util.regex.Pattern;
 @Component
 public class ReadMailboxCRMProcessor implements Processor {
 
-    private static final String DEAL_SOURCE_ID = AppName.EMODEL + "/deal";
+    private static final String LEAD_SOURCE_ID = AppName.EMODEL + "/lead";
 
-    @Value("${mail.deal.subject.consult}")
+    @Value("${mail.lead.subject.consult}")
     private String[] dealSubjectsConsult;
-    @Value("${mail.deal.subject.demonstration}")
+    @Value("${mail.lead.subject.demonstration}")
     private String[] dealSubjectsDemonstration;
-    @Value("${mail.deal.subject.demo-access}")
+    @Value("${mail.lead.subject.demo-access}")
     private String dealSubjectDemoAccess;
-    @Value("${mail.deal.subject.community}")
+    @Value("${mail.lead.subject.community}")
     private String[] dealSubjectCommunity;
-    @Value("${mail.deal.subject.price}")
+    @Value("${mail.lead.subject.price}")
     private String dealSubjectPrice;
-    @Value("${mail.deal.subject.cloud}")
+    @Value("${mail.lead.subject.cloud}")
     private String dealSubjectCloud;
-    @Value("${mail.deal.subject.community-subscription}")
+    @Value("${mail.lead.subject.community-subscription}")
     private String communitySubscription;
-    @Value("${mail.deal.subject.partnership-request}")
+    @Value("${mail.lead.subject.partnership-request}")
     private String partnershipRequest;
 
     public static final String CONSULT_KIND = "consult";
@@ -52,7 +52,7 @@ public class ReadMailboxCRMProcessor implements Processor {
 
     private final Pattern dealNumber;
 
-    public ReadMailboxCRMProcessor(@Value("${mail.deal.pattern.dealNumber}") final String dealNumberPattern) {
+    public ReadMailboxCRMProcessor(@Value("${mail.lead.pattern.dealNumber}") final String dealNumberPattern) {
         dealNumber = Pattern.compile(dealNumberPattern);
     }
 
@@ -77,19 +77,19 @@ public class ReadMailboxCRMProcessor implements Processor {
         Matcher matcher = dealNumber.matcher(ecomMail.getSubject());
         if (matcher.find()) {
             exchange.setProperty("subject", "mail-activity");
-            String dealNumber = matcher.group(0);
-            mail.setDealNumber(dealNumber);
+            String leadNumber = matcher.group(0);
+            mail.setLeadNumber(leadNumber);
             FindRecordDTO findRecordDTO = new FindRecordDTO(
-                DEAL_SOURCE_ID,
-                dealNumber,
+                LEAD_SOURCE_ID,
+                leadNumber,
                 "number"
             );
             exchange.setVariable(AddEmailActivityProcessor.FIND_RECORD_VARIABLE, findRecordDTO);
         } else {
-            exchange.setProperty("subject", "deal");
+            exchange.setProperty("subject", "lead");
         }
 
-        if (mail.getDealNumber() == null) {
+        if (mail.getLeadNumber() == null) {
             for (String dealSubject : dealSubjectsConsult) {
                 if (mail.getSubject().contains(dealSubject)) {
                     mail.setKind(CONSULT_KIND);

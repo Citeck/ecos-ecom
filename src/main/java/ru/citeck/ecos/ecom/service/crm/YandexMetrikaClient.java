@@ -1,9 +1,9 @@
-package ru.citeck.ecos.ecom.service.deal;
+package ru.citeck.ecos.ecom.service.crm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
-import ru.citeck.ecos.ecom.service.deal.dto.DealData;
+import ru.citeck.ecos.ecom.service.crm.dto.LeadData;
 import ru.citeck.ecos.endpoints.lib.EcosEndpoint;
 import ru.citeck.ecos.secrets.lib.secret.EcosSecret;
 
@@ -24,14 +24,14 @@ public class YandexMetrikaClient {
         this.yearsSearchInterval = yearsSearchInterval;
     }
 
-    public String getFirstTrafficSource(EcosEndpoint endpoint, EcosSecret credentials, DealData dealData)
+    public String getFirstTrafficSource(EcosEndpoint endpoint, EcosSecret credentials, LeadData leadData)
             throws RuntimeException {
         String url = endpoint.getUrl();
         String authToken = credentials.getTokenData().getToken();
 
-        LocalDate date2 = LocalDate.ofInstant(dealData.getDateReceived(), ZoneOffset.UTC);
+        LocalDate date2 = LocalDate.ofInstant(leadData.getDateReceived(), ZoneOffset.UTC);
         LocalDate date1 = date2.minusYears(yearsSearchInterval);
-        String urlWithParams = getUrlWithParams(url, dealData.getYmClientId(), date1.toString(), date2.toString());
+        String urlWithParams = getUrlWithParams(url, leadData.getYmClientId(), date1.toString(), date2.toString());
 
         HttpHeaders headers = getHttpHeaders(authToken);
         HttpEntity<String> requestEntity = new HttpEntity<>(headers);

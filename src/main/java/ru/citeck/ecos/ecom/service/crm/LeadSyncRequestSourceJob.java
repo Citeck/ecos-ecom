@@ -1,4 +1,4 @@
-package ru.citeck.ecos.ecom.service.deal;
+package ru.citeck.ecos.ecom.service.crm;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +9,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import ru.citeck.ecos.commons.data.ObjectData;
 import ru.citeck.ecos.commons.task.schedule.Schedules;
 import ru.citeck.ecos.commons.utils.StringUtils;
-import ru.citeck.ecos.ecom.service.deal.dto.DealData;
+import ru.citeck.ecos.ecom.service.crm.dto.LeadData;
 import ru.citeck.ecos.endpoints.lib.EcosEndpoint;
 import ru.citeck.ecos.endpoints.lib.EcosEndpoints;
 import ru.citeck.ecos.records2.predicate.PredicateService;
@@ -29,14 +29,14 @@ import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.List;
 
-import static ru.citeck.ecos.ecom.processor.CreateDealProcessor.REQUEST_SOURCE_SK;
+import static ru.citeck.ecos.ecom.processor.CreateLeadProcessor.REQUEST_SOURCE_SK;
 
 @Component
 @Slf4j
-public class DealSyncRequestSourceJob {
+public class LeadSyncRequestSourceJob {
 
     private static final String YM_API_ENDPOINT_ID = "yandex-metrika-api";
-    private static final String DEAL_SK = "deal";
+    private static final String LEAD_SK = "lead";
     private static final EntityRef OTHER_REQUEST_SOURCE = EntityRef.create(AppName.EMODEL, REQUEST_SOURCE_SK, "other");
     private static final EntityRef UNKNOWN_REQUEST_SOURCE = EntityRef.create(AppName.EMODEL, REQUEST_SOURCE_SK, "unknown");
 
@@ -55,11 +55,11 @@ public class DealSyncRequestSourceJob {
     private final String cronSyncExpression;
 
     @Autowired
-    public DealSyncRequestSourceJob(EcosTaskSchedulerApi ecosTaskScheduler,
+    public LeadSyncRequestSourceJob(EcosTaskSchedulerApi ecosTaskScheduler,
                                     EcosAppLockService ecosAppLockService,
                                     RecordsService recordsService,
-                                    @Value("${ecos.deal.ym-sync.cron-expression}") String ymSyncCronExpression,
-                                    @Value("${ecos.deal.ym-sync.search-interval}") Integer ymSyncYearsSearchInterval) {
+                                    @Value("${ecos.lead.ym-sync.cron-expression}") String ymSyncCronExpression,
+                                    @Value("${ecos.lead.ym-sync.search-interval}") Integer ymSyncYearsSearchInterval) {
         this.ecosTaskScheduler = ecosTaskScheduler;
         this.ecosAppLockService = ecosAppLockService;
         this.recordsService = recordsService;
@@ -70,9 +70,9 @@ public class DealSyncRequestSourceJob {
     @PostConstruct
     private void init() {
         ecosTaskScheduler.scheduleJ(
-                "DealSyncRequestSourceJob",
+                "LeadSyncRequestSourceJob",
                 Schedules.cron(cronSyncExpression),
-                () -> ecosAppLockService.doInSyncOrSkipJ("DealSyncRequestSourceJob",
+                () -> ecosAppLockService.doInSyncOrSkipJ("LeadSyncRequestSourceJob",
                         Duration.ofSeconds(10), this::sync)
         );
     }
@@ -92,14 +92,14 @@ public class DealSyncRequestSourceJob {
         }
 
         int excludedDealsCount = 0;
-        List<EntityRef> deals = getDeals(excludedDealsCount);
+        List<EntityRef> deals = getLeads(excludedDealsCount);
         int iter = 0;
         while (!deals.isEmpty() && iter < MAX_ITERATION) {
             for (EntityRef deal : deals) {
-                DealData dealData = getDealData(deal);
+                LeadData leadData = getLeadData(deal);
                 String requestSourceType = null;
                 try {
-                    requestSourceType = yandexMetrikaClient.getFirstTrafficSource(endpoint, credentials, dealData);
+                    requestSourceType = yandexMetrikaClient.getFirstTrafficSource(endpoint, credentials, leadData);
                 } catch (Exception e) {
                     if (e instanceof HttpClientErrorException &&
                             HttpStatus.BAD_REQUEST.equals(((HttpClientErrorException) e).getStatusCode())) {
@@ -118,7 +118,7 @@ public class DealSyncRequestSourceJob {
                     updateRequestSoursForDeal(deal, requestSource);
                     log.info("Successful set requestSource=" + requestSourceType + " for deal=" + deal);
                 } else {
-                    Integer syncRequestSourceCount = dealData.getSyncRequestSourceCount();
+                    Integer syncRequestSourceCount = leadData.getSyncRequestSourceCount();
                     if (syncRequestSourceCount == null || syncRequestSourceCount == MAX_SYNC_REQUEST_SOURCE_COUNT) {
                         syncRequestSourceCount = 0;
                     }
@@ -127,7 +127,7 @@ public class DealSyncRequestSourceJob {
                         ObjectData data = ObjectData.create();
                         data.set(REQUEST_SOURCE_ATT, UNKNOWN_REQUEST_SOURCE);
                         data.set(SYNC_REQUEST_SOURCE_COUNT_ATT, syncRequestSourceCount);
-                        updateDeal(deal, data);
+                        updateLead(deal, data);
                         log.info("Sync attempt limit exceeded for deal=" + deal +
                                 " Set requestSource \"unknown\"");
                     } else {
@@ -136,14 +136,14 @@ public class DealSyncRequestSourceJob {
                     excludedDealsCount++;
                 }
             }
-            deals = getDeals(excludedDealsCount);
+            deals = getLeads(excludedDealsCount);
             iter++;
         }
     }
 
-    private List<EntityRef> getDeals(int skipCount) {
+    private List<EntityRef> getLeads(int skipCount) {
         RecordsQuery query = RecordsQuery.create()
-                .withSourceId(AppName.EMODEL + "/" + DEAL_SK)
+                .withSourceId(AppName.EMODEL + "/" + LEAD_SK)
                 .withLanguage(PredicateService.LANGUAGE_PREDICATE)
                 .withQuery(Predicates.and(
                         Predicates.empty(REQUEST_SOURCE_ATT),
@@ -155,8 +155,8 @@ public class DealSyncRequestSourceJob {
         return recordsService.query(query).getRecords();
     }
 
-    private DealData getDealData(EntityRef deal) {
-        return recordsService.getAtts(deal, DealData.class);
+    private LeadData getLeadData(EntityRef deal) {
+        return recordsService.getAtts(deal, LeadData.class);
     }
 
     private EntityRef getRequestSourceById(String id) {
@@ -171,16 +171,16 @@ public class DealSyncRequestSourceJob {
     private void updateRequestSoursForDeal(EntityRef deal, EntityRef requestSource) {
         ObjectData data = ObjectData.create();
         data.set(REQUEST_SOURCE_ATT, requestSource);
-        updateDeal(deal, data);
+        updateLead(deal, data);
     }
 
     private void updateSyncRequestSourceCountForDeal(EntityRef deal, Integer syncRequestSourceCount) {
         ObjectData data = ObjectData.create();
         data.set(SYNC_REQUEST_SOURCE_COUNT_ATT, syncRequestSourceCount);
-        updateDeal(deal, data);
+        updateLead(deal, data);
     }
 
-    private void updateDeal(EntityRef deal, ObjectData data) {
+    private void updateLead(EntityRef deal, ObjectData data) {
         RecordAtts recordAtts = new RecordAtts();
         recordAtts.setId(deal);
         recordAtts.setAtts(data);

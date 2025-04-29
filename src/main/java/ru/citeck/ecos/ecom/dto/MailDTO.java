@@ -19,7 +19,7 @@ public class MailDTO {
     private String content;
     private Date date;
     private String kind;
-    private String dealNumber;
+    private String leadNumber;
     private List<EcomMailAttachment> attachments;
 
     @JsonProperty("docs:documents")

@@ -1,4 +1,4 @@
-package ru.citeck.ecos.ecom.service.deal.dto;
+package ru.citeck.ecos.ecom.service.crm.dto;
 
 import lombok.Data;
 import ru.citeck.ecos.commons.data.ObjectData;

@@ -3,7 +3,7 @@ server:
   port: 8686 # указываем порт, на котором будет развернут микросервис
 
 mail:
-  deal:
+  lead:
     subject:
       consult: Получить консультацию, Консультация на странице, Заявка на странице, Контактная форма
       demonstration: Заказать демонстрацию, Запрос демонстрации
@@ -32,7 +32,7 @@ mail:
     pattern: "\\((?<key>[A-Za-zА-ЯЁа-яё0-9]+): (?<value>[^\\s:()]+)\\)$"
 
 ecos:
-  deal:
+  lead:
     ym-sync:
       cron-expression: 0 0 */6 * * *
       search-interval: 2
