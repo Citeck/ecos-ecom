@@ -8,8 +8,11 @@ import org.jsoup.select.NodeVisitor
 
 object HtmlUtils {
 
-    private val validTags = setOf("strong", "em", "ul", "li", "ol", "p", "i", "b", "u", "a", "br", "span")
-    private val validAttributes = mapOf("a" to setOf("href"))
+    private val validTags = setOf("strong", "em", "ul", "li", "ol", "p", "i", "b", "u", "a", "br", "span", "img")
+    private val validAttributes = mapOf(
+        "a" to setOf("href"),
+        "img" to setOf("src", "alt")
+    )
 
     /**
      * Convert the HTML content of the email to a format suitable
