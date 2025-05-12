@@ -116,6 +116,14 @@ class EcomMailReaderProcessor : Processor {
         private val fileName: String
     ) : EcomMailAttachment {
 
+        override fun getContentId(): String {
+            var id = part.getHeader("Content-Id")?.firstOrNull() ?: ""
+            if (id.startsWith("<") && id.endsWith(">")) {
+                id = id.substring(1, id.length - 1)
+            }
+            return id
+        }
+
         override fun getName(): String {
             return fileName
         }

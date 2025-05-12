@@ -49,6 +49,8 @@ class SdEcomMailProcessor(
 
         private const val SD_RESPONSE_MAIL_PREFIX = "Re: (SD-"
 
+        private const val ATT_DOCUMENTS = "docs:documents"
+
         private val log = KotlinLogging.logger {}
     }
 
@@ -90,16 +92,32 @@ class SdEcomMailProcessor(
 
     private fun createAndUpdateData(mailKind: MailKind, mail: EcomMail, client: EntityRef, initiator: EntityRef) {
 
-        val sdRequestRef = getOrCreateSDRecord(mailKind, mail, client, initiator)
+        var mailContent = HtmlUtils.convertHtmlToFormattedText(mail.content)
 
-        val createdAttachments = ArrayList<Pair<EntityRef, EcosContentData>>()
+        val sdRequestRef: EntityRef = if (mailKind == MailKind.NEW) {
+            log.debug { "Received new request. Subject: '${mail.subject}' at ${mail.date}" }
+            EntityRef.EMPTY
+        } else {
+            val requestRef = AuthContext.runAsSystem {
+                findSdRequestByTitle(mail.subject)
+            }
+            if (requestRef.isEmpty()) {
+                log.error { "SD request doesn't found for subject '${mail.subject}' at ${mail.date}. Letter will be skipped." }
+                return
+            }
+            log.debug { "Received reply for request '$requestRef'. Subject: '${mail.subject}' at ${mail.date}" }
+            requestRef
+        }
+
+        val createdAttachments = ArrayList<AttachmentInfo>()
 
         for (attachment in mail.attachments) {
 
             val docAtts = DataValue.createObj()
-                .set(RecordConstants.ATT_PARENT, sdRequestRef)
-                .set(RecordConstants.ATT_PARENT_ATT, "docs:documents")
-
+            if (sdRequestRef.isNotEmpty()) {
+                docAtts[RecordConstants.ATT_PARENT] = sdRequestRef
+                docAtts[RecordConstants.ATT_PARENT_ATT] = ATT_DOCUMENTS
+            }
             val docRef = attachment.readData({ attachData ->
                 ecosContentApi.uploadFile()
                     .withEcosType("attachment")
@@ -113,34 +131,46 @@ class SdEcomMailProcessor(
                 log.warn {
                     "Attachment content is empty. " +
                     "Attachment name: ${attachment.getName()} " +
-                    "SD request $sdRequestRef mail date ${mail.date}"
+                    "mail '${mail.subject}' at ${mail.date}"
                 }
                 continue
             }
             val meta = ecosContentApi.getContent(docRef)
                 ?: error("Attachment was uploaded, but getContent return null. Mail: $mail")
 
-            log.debug { "Saved document: ${attachment.getName()} - $docRef for SD request $sdRequestRef" }
+            log.debug {
+                "Saved document: ${attachment.getName()} - " +
+                    "$docRef for mail '${mail.subject}' at ${mail.date}"
+            }
 
-            createdAttachments.add(docRef to meta)
+            val isInline = attachment.getContentId().isNotEmpty()
+            if (isInline) {
+                mailContent = mailContent.replace(
+                    "cid:${attachment.getContentId()}",
+                    ecosContentApi.getDownloadUrl(docRef)
+                )
+            }
+            createdAttachments.add(AttachmentInfo(docRef, meta, isInline))
         }
 
-        if (mailKind == MailKind.REPLY) {
-            createComment(sdRequestRef, mail, createdAttachments)
+        when (mailKind) {
+            MailKind.NEW -> createSDRecord(mail, mailContent, client, initiator, createdAttachments.map { it.ref })
+            MailKind.REPLY -> createComment(sdRequestRef, mail, mailContent, createdAttachments)
         }
     }
 
     private fun createComment(
         sdRecord: EntityRef,
         mail: EcomMail,
-        attachments: List<Pair<EntityRef, EcosContentData>>
+        mailContent: String,
+        attachments: List<AttachmentInfo>
     ) {
 
         log.debug {
             "Create new comment for SD request $sdRecord by mail from ${mail.from}. Mail date: ${mail.date}"
         }
 
-        var commentContent = HtmlUtils.convertHtmlToFormattedText(mail.content)
+        var commentContent = mailContent
 
         if (attachments.isNotEmpty()) {
 
@@ -148,12 +178,15 @@ class SdEcomMailProcessor(
 
             newContent.append(commentContent)
             for (attachment in attachments) {
+                if (attachment.isInline) {
+                    continue
+                }
                 newContent.append("<p><span>")
                 val attachmentData = mapOf(
                     "type" to "lexical-file-node",
-                    "size" to attachment.second.getSize(),
-                    "name" to attachment.second.getName(),
-                    "fileRecordId" to attachment.first
+                    "size" to attachment.contentData.getSize(),
+                    "name" to attachment.contentData.getName(),
+                    "fileRecordId" to attachment.ref
                 )
                 newContent.append(Json.mapper.toStringNotNull(attachmentData))
                 newContent.append("</span></p>")
@@ -173,49 +206,43 @@ class SdEcomMailProcessor(
         return SimpleAuthData(userRef.getLocalId(), authorities)
     }
 
-    private fun getOrCreateSDRecord(
-        mailKind: MailKind,
+    private fun createSDRecord(
         mail: EcomMail,
+        content: String,
         client: EntityRef,
-        initiator: EntityRef
+        initiator: EntityRef,
+        documents: List<EntityRef>
     ): EntityRef {
-        return when (mailKind) {
-            MailKind.NEW -> {
-
-                log.info {
-                    "Create new SD request by mail from ${mail.from}. " +
-                        "Subject: ${mail.subject} " +
-                        "Date: ${mail.date} " +
-                        "Initiator: $initiator " +
-                        "Client: $client"
-                }
-
-                val hasCriticalTag = Utils.hasCriticalTagsInSubject(mail.subject, tagsString)
-
-                val attributes = ObjectData.create()
-                    .set(SdRequestDesc.ATT_CREATED_AUTOMATICALLY, true)
-                    .set(SdRequestDesc.ATT_PRIORITY, if (hasCriticalTag) "urgent" else "medium")
-                    .set(SdRequestDesc.ATT_LETTER_CONTENT_WO_TAGS, Jsoup.parse(mail.content).text())
-                    .set(SdRequestDesc.ATT_CLIENT, client)
-                    .set(SdRequestDesc.ATT_INITIATOR, initiator)
-                    .set(SdRequestDesc.ATT_LETTER_CONTENT, HtmlUtils.convertHtmlToFormattedText(mail.content))
-                    .set(SdRequestDesc.ATT_DATE_RECEIVED, mail.date)
-                    .set(SdRequestDesc.ATT_AUTHOR, mail.from)
-                    .set(SdRequestDesc.ATT_LETTER_TOPIC, mail.subject)
-
-                val sdRequestRef = recordsService.create(SdRequestDesc.TYPE.toString(), attributes)
-
-                log.debug { "SD request was created. Ref: $sdRequestRef" }
-
-                sdRequestRef
-            }
-
-            MailKind.REPLY -> {
-                AuthContext.runAsSystem {
-                    findSdRequestByTitle(mail.subject)
-                }
-            }
+        log.info {
+            "Create new SD request by mail from ${mail.from}. " +
+                "Subject: ${mail.subject} " +
+                "Date: ${mail.date} " +
+                "Initiator: $initiator " +
+                "Client: $client"
         }
+
+        val hasCriticalTag = Utils.hasCriticalTagsInSubject(mail.subject, tagsString)
+
+        val attributes = ObjectData.create()
+            .set(SdRequestDesc.ATT_CREATED_AUTOMATICALLY, true)
+            .set(SdRequestDesc.ATT_PRIORITY, if (hasCriticalTag) "urgent" else "medium")
+            .set(SdRequestDesc.ATT_LETTER_CONTENT_WO_TAGS, Jsoup.parse(mail.content).text())
+            .set(SdRequestDesc.ATT_CLIENT, client)
+            .set(SdRequestDesc.ATT_INITIATOR, initiator)
+            .set(SdRequestDesc.ATT_LETTER_CONTENT, content)
+            .set(SdRequestDesc.ATT_DATE_RECEIVED, mail.date)
+            .set(SdRequestDesc.ATT_AUTHOR, mail.from)
+            .set(SdRequestDesc.ATT_LETTER_TOPIC, mail.subject)
+
+        if (documents.isNotEmpty()) {
+            attributes[ATT_DOCUMENTS] = documents
+        }
+
+        val sdRequestRef = recordsService.create(SdRequestDesc.TYPE.toString(), attributes)
+
+        log.debug { "SD request was created. Ref: $sdRequestRef" }
+
+        return sdRequestRef
     }
 
     private fun getClientsByEmailDomain(emailDomain: String): List<EntityRef> {
@@ -352,4 +379,10 @@ class SdEcomMailProcessor(
         NEW,
         REPLY
     }
+
+    private class AttachmentInfo(
+        val ref: EntityRef,
+        val contentData: EcosContentData,
+        val isInline: Boolean
+    )
 }
