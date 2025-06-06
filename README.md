@@ -1,16 +1,14 @@
 ![Citeck ECOS Logo](https://raw.githubusercontent.com/Citeck/ecos-ui/develop/public/img/logo/ecos-logo.svg)
 
+**Read this in other languages: [Русский](README.RU.MD)**
+
 # `ecos-ecom`
 
 Welcome to the Citeck `ecos-ecom` repository! The microservice provides a solution for creating and managing email newsletters, chat bots within the platform.
 
 ## Get started
 
-If you are new to Citeck platform and would like to run the software locally, we recommend you download the Dockerized version from [Demo repository](https://github.com/Citeck/ecos-community-demo).
-
-## Useful Links
-
-- [Documentation](https://citeck-ecos.readthedocs.io/ru/latest/index.html) provides more in-depth information.
+If you are new to Citeck platform and would like to load the software locally, we recommend you download the Dockerized version from [Demo repository](https://github.com/Citeck/citeck-community).
 
 ## Dependencies
 
@@ -62,6 +60,10 @@ Then, run a Sonar analysis:
 ```
 ./mvnw -Pprod clean test sonar:sonar
 ```
+
+## Useful Links
+
+- [Documentation](https://citeck-ecos.readthedocs.io/ru/latest/index.html) provides more in-depth information.
 
 ## Contributing
 
