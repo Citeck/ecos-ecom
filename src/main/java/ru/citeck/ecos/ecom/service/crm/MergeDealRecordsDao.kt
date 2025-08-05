@@ -21,7 +21,7 @@ class MergeDealRecordsDao(recordsService: RecordsService?) : AbstractMergeCrmRec
         private const val CRM_LINK_DEAL = "crm-links:deal"
 
         private val COMMENT_MERGED_MARK: Pattern =
-            Pattern.compile("Комментрий от [0-9]{2}.[0-9]{2}.[0-9]{4} из сделки [0-9]+")
+            Pattern.compile("Комментарий от [0-9]{2}.[0-9]{2}.[0-9]{4} из сделки [0-9]+")
     }
 
     override fun getId(): String {

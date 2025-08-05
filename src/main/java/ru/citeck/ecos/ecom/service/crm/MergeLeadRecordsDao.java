@@ -30,7 +30,7 @@ public class MergeLeadRecordsDao extends AbstractMergeCrmRecordsDao {
     private static final String EMESSAGE_ATT = "emessage";
     private static final String NUMBER_OF_USERS_ATT = "numberOfUsers";
 
-    private static final Pattern COMMENT_MERGED_MARK = Pattern.compile("Комментрий от [0-9]{2}.[0-9]{2}.[0-9]{4} из лида [0-9]+");
+    private static final Pattern COMMENT_MERGED_MARK = Pattern.compile("Комментарий от [0-9]{2}.[0-9]{2}.[0-9]{4} из лида [0-9]+");
 
     public MergeLeadRecordsDao(RecordsService recordsService) {
         super(recordsService);
