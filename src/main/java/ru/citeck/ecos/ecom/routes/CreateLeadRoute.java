@@ -21,7 +21,7 @@ public class CreateLeadRoute extends RouteBuilder {
 
         map.put("fromAddress", "siteEmail");
         map.put("name", "name");
-        map.put("company", "company");
+        map.put("counterpartyText", "counterpartyText");
         map.put("counterparty", "counterparty");
         map.put("dateReceived", "dateReceived");
         map.put("description", "description");

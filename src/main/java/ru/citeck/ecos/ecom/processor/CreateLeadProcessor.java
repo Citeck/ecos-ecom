@@ -118,10 +118,10 @@ public class CreateLeadProcessor implements Processor {
             counterparty = getCounterpartyByName(company);
             if (counterparty != null) {
                 leadDto.setCounterparty(counterparty.getAsString());
-                leadDto.setCompany(getNameFromCounterparty(counterparty));
+                leadDto.setCounterpartyText(getNameFromCounterparty(counterparty));
                 contacts.addAll(getContactFromCounterparty(counterparty));
             } else {
-                leadDto.setCompany(company);
+                leadDto.setCounterpartyText(company);
             }
         }
 

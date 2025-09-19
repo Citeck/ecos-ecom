@@ -20,7 +20,7 @@ public class CreateOtherLeadRoute extends RouteBuilder {
         Map<String, String> map = new HashMap<>();
 
         map.put("fromAddress", "siteEmail");
-        map.put("company", "company");
+        map.put("counterpartyText", "counterpartyText");
         map.put("counterparty", "counterparty");
         map.put("dateReceived", "dateReceived");
         map.put("description", "description");

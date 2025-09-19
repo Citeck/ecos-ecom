@@ -13,7 +13,7 @@ public class LeadDTO {
     private String from;
     private String fromAddress;
     private String subject;
-    private String company;
+    private String counterpartyText;
     private String name;
     private String counterparty;
     private String description;
