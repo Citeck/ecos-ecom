@@ -38,6 +38,8 @@ public class ReadMailboxCRMProcessor implements Processor {
     private String communitySubscription;
     @Value("${mail.lead.subject.partnership-request}")
     private String partnershipRequest;
+    @Value("${mail.lead.subject.special-offer}")
+    private String specialOffer;
 
     public static final String CONSULT_KIND = "consult";
     public static final String DEMONSTRATION_KIND = "demonstration";
@@ -49,6 +51,7 @@ public class ReadMailboxCRMProcessor implements Processor {
     public static final String OTHER_KIND = "other";
     public static final String EMAIL_KIND = "email";
     public static final String PARTNERSHIP_REQUEST_KIND = "partnership-request";
+    public static final String SPECIAL_OFFER_KIND = "special-offer";
 
     private final Pattern dealNumber;
 
@@ -120,7 +123,9 @@ public class ReadMailboxCRMProcessor implements Processor {
                     mail.setKind(COMMUNITY_SUBSCRIPTION_KIND);
                 else if (mail.getSubject().contains(partnershipRequest))
                     mail.setKind(PARTNERSHIP_REQUEST_KIND);
-                else {
+                else if (mail.getSubject().contains(specialOffer)) {
+                    mail.setKind(SPECIAL_OFFER_KIND);
+                } else {
                     mail.setKind(OTHER_KIND);
                     exchange.setProperty("subject", "other");
                 }
