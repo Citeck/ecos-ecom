@@ -57,7 +57,4 @@ class MergeDealRecordsDao(recordsService: RecordsService?) : AbstractMergeCrmRec
     override fun getEntityTypeDisplayName(): String {
         return "Сделка"
     }
-
-
 }
-

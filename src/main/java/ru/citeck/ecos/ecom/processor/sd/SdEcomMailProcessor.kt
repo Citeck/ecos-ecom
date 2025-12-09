@@ -130,8 +130,8 @@ class SdEcomMailProcessor(
             if (docRef == null) {
                 log.warn {
                     "Attachment content is empty. " +
-                    "Attachment name: ${attachment.getName()} " +
-                    "mail '${mail.subject}' at ${mail.date}"
+                        "Attachment name: ${attachment.getName()} " +
+                        "mail '${mail.subject}' at ${mail.date}"
                 }
                 continue
             }

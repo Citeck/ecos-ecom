@@ -84,7 +84,6 @@ object HtmlUtils {
                                 }
                             }
                         }
-
                     }
                 } else if (node is TextNode && depth == 1) {
                     node.replaceWith(Element("p").appendChild(TextNode(node.wholeText)))
