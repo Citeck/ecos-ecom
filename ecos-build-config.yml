@@ -1,6 +1,0 @@
----
-type: 'maven-webapp'
-properties:
-  jdk: JDK21
-  image:
-    multiplatform: true

@@ -1,3 +1,5 @@
 include:
   - project: 'infrastructure/gitlab-ci'
-    file: '/templates/.enterprise-microservice-jdk21-ci.yml'
+    file: '/templates/maven/.maven-microservice-ci-full.yml'
+    inputs:
+      jdk_version: "21"
