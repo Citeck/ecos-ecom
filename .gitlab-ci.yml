@@ -1,3 +1,2 @@
 include:
-  - project: 'infrastructure/gitlab-ci'
-    file: '/templates/maven/.maven-microservice-ci-full.yml'
+  - component: gitlab.citeck.ru/infrastructure/gitlab-ci/maven-microservice@1
