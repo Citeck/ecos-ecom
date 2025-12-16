@@ -3,7 +3,6 @@ package ru.citeck.ecos.ecom.service.cameldsl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.Exchange;
 import org.apache.camel.Handler;
-import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -32,43 +31,18 @@ public class MailBodyExtractor {
         if (body instanceof String) {
             result = (String) body;
         } else if (body instanceof MimeMultipart) {
-            result = getHtmlTextFromMailOrPlainText((MimeMultipart) body);
+            try {
+                result = getText(((MimeMultipart) body).getParent());
+            } catch (Exception e) {
+                log.error("Error while getting html text from mail", e);
+                return null;
+            }
         } else {
             log.error("Unknown body type: {}", body.getClass());
             return null;
         }
 
         return removeVulnerabilities(result);
-    }
-
-    private String getHtmlTextFromMailOrPlainText(MimeMultipart multipart) {
-        try {
-            //Try to find html text  from all parts. It's preferable.
-            for (int i = 0; i < multipart.getCount(); i++) {
-                var bodyPart = multipart.getBodyPart(i);
-                if (bodyPart.isMimeType("text/html")) {
-                    String text = getText(bodyPart);
-                    if (StringUtils.isNotBlank(text)) {
-                        return text;
-                    }
-                }
-            }
-
-            for (int i = 0; i < multipart.getCount(); i++) {
-                var bodyPart = multipart.getBodyPart(i);
-                if (bodyPart != null) {
-                    String result = getText(bodyPart);
-                    if (StringUtils.isNotBlank(result)) {
-                        return result;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error while getting html text from mail", e);
-            return null;
-        }
-
-        return null;
     }
 
     private String removeVulnerabilities(String data) {
