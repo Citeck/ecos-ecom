@@ -49,8 +49,10 @@ object HtmlUtils {
                 }
                 if (node is Element) {
                     val tag = node.tagName()
-                    if (tag == "div" && depth == 1) {
-                        node.replaceWith(Element("p").appendChildren(node.childNodes()))
+                    if (tag == "div") {
+                        if (depth == 1) {
+                            node.replaceWith(Element("p").appendChildren(node.childNodes()))
+                        }
                     } else if (!VALID_TAGS.contains(tag)) {
                         var newNode: Node = TextNode(node.wholeText())
                         if (depth == 1) {
