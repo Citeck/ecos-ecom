@@ -10,6 +10,7 @@ import org.apache.camel.Processor
 import org.apache.camel.component.mail.MailMessage
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.time.FastDateFormat
+import org.eclipse.angus.mail.imap.IMAPBodyPart
 import ru.citeck.ecos.commons.mime.MimeTypes
 import ru.citeck.ecos.ecom.service.cameldsl.MailBodyExtractor
 import java.io.BufferedInputStream
@@ -111,13 +112,19 @@ class EcomMailReaderProcessor : Processor {
         return fromEmail.substring(fromEmail.indexOf("@") + 1)
     }
 
-    private inner class BodyPartAttachment(
+    private class BodyPartAttachment(
         private val part: BodyPart,
         private val fileName: String
     ) : EcomMailAttachment {
 
         override fun getContentId(): String {
-            var id = part.getHeader("Content-Id")?.firstOrNull() ?: ""
+            var id = ""
+            if (part is IMAPBodyPart) {
+                id = part.contentID ?: ""
+            }
+            if (id.isBlank()) {
+                id = part.getHeader("Content-Id")?.firstOrNull() ?: ""
+            }
             if (id.startsWith("<") && id.endsWith(">")) {
                 id = id.substring(1, id.length - 1)
             }
