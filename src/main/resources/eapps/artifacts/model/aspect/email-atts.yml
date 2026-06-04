@@ -1,0 +1,42 @@
+---
+id: email-atts
+name:
+  ru: Метаданные письма
+  en: Email metadata
+
+attributes:
+  - id: emailFrom
+    name:
+      ru: От
+      en: From
+    type: TEXT
+  - id: emailTo
+    name:
+      ru: Кому
+      en: To
+    type: TEXT
+  - id: emailCc
+    name:
+      ru: Копия
+      en: Cc
+    type: TEXT
+  - id: emailSubject
+    name:
+      ru: Тема
+      en: Subject
+    type: TEXT
+  - id: emailMessageId
+    name:
+      ru: Message-ID
+      en: Message-ID
+    type: TEXT
+  - id: emailInReplyTo
+    name:
+      ru: In-Reply-To
+      en: In-Reply-To
+    type: TEXT
+  - id: emailReceivedAt
+    name:
+      ru: Получено
+      en: Received at
+    type: DATETIME

@@ -1,0 +1,15 @@
+---
+id: email-activity-add-email-atts
+name:
+  ru: Добавить аспект метаданных письма к email-activity
+  en: Add email metadata aspect to email-activity
+target: 'model/type$email-activity'
+system: true
+order: 100
+type: json
+config:
+  operations:
+    - op: add
+      path: '$.aspects'
+      value:
+        - ref: emodel/aspect@email-atts

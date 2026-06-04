@@ -1,0 +1,33 @@
+---
+id: mail-inbox-pt
+name:
+  ru: Настройка почтового ящика Project Tracker
+  en: Project Tracker mailbox config
+value:
+  enabled: false
+  imap: ""
+  credentials: null
+  folder: "INBOX"
+  successFolder: "Processed"
+  errorFolder: "Errors"
+  delay: 60000
+valueDef:
+  formRef: uiserv/form@config-mail-inbox-pt
+  attributes:
+    - id: enabled
+      type: BOOLEAN
+    - id: imap
+      type: TEXT
+    - id: credentials
+      type: ASSOC
+      config:
+        typeRef: emodel/type@secret
+        child: false
+    - id: folder
+      type: TEXT
+    - id: successFolder
+      type: TEXT
+    - id: errorFolder
+      type: TEXT
+    - id: delay
+      type: NUMBER

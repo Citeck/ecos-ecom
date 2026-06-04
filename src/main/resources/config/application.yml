@@ -31,6 +31,8 @@ mail:
       ymClientId: "(?m)(?<=YM_client_ID:).*$"
   activity:
     pattern: "\\((?<key>[A-Za-zА-ЯЁа-яё0-9]+): (?<value>[^\\s:()]+)\\)$"
+  attachment:
+    max-size-mb: 10
 
 ecos:
   lead:
