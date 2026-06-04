@@ -396,8 +396,16 @@ docker logs citeck_eapps_<ns>_default --tail 100 2>&1 | grep -E "DEPLOYED|FAILED
 - **Дедуп (A8) намеренно не покрыт in-process.** `existsByMessageId` фильтрует по `AND(_type, email-atts:emailMessageId)`: `InMemDataRecordsDao` не отдаёт `_type` через `getAtt` (хранится null), а `jakarta.mail.Transport.send` перегенерирует `Message-ID`. Воспроизвести дубль в in-mem нельзя. Дедуп покрыт юнитом `ProjectEmailImportServiceTest.U3` (мок `queryOne`) и стенд-кейсом A8.
 - **Per-project опрос** (`PollProjectMailboxesProcessor`, pull через `ConsumerTemplate.receive`) на GreenMail падает в `FolderClosedException`, поэтому in-process прогоняется через глобальный роут; общая логика import/routing/move у них одна. Оркестрация per-project покрыта юнит-тестом + стенд-смоуком.
 
-### 🔁 Остаётся (стенд-смоук, после деплоя)
-- Прогон приёмочного чек-листа на живом локальном стенде (Records API + реальная почта): per-project импорт A4–A7/A13, дедуп A8, видимость секции «Почта» по ролям A11/A12 (Playwright).
+### ✅ Стенд-смоук (2026-06-04, `tdcuosa` после редеплоя `edeploy` + GreenMail sidecar)
+Per-project ящик настраивался через `records_mutate` аспекта `ept-project-mailbox` (таймер-роут реактивен без рестарта).
+- **A1** — `[TESTMAIL]` → `email-activity` под проектом (`_parent=emodel/project@TESTMAIL`), `mailboxLastSync` обновлён, письмо перенесено INBOX→Processed. ✅
+- **A8 дедуп** — повторная доставка того же `Message-ID` → второй активности нет (на реальной платформе `_type` индексируется, в отличие от in-mem). ✅
+- **A3 нет ключа** — активность не создана, письмо → Errors. ✅
+- **A2 issue-ключ** — `CRM1-6: …` через ящик на проекте CRM1 → активность под проектом CRM1 + `emodel/comment` на `emodel/ept-issue@CRM1-6`. ✅ Потребовался запущенный сервис `notifications` (создание комментария шлёт уведомление); при его отсутствии импорт падал и транзакция откатывалась целиком — **транзакционность подтверждена**.
+
+### 🔁 Остаётся
+- Видимость секции «Почта» по ролям A11/A12 — Playwright не прогонялся.
+- A7 (ошибка credentials → `mailboxLastError`) и A13 (несколько ящиков) — на стенде в эту сессию не прогонялись (покрыто юнитом `PollProjectMailboxesProcessorTest`).
 
 ---
 
