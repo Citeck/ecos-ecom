@@ -367,7 +367,41 @@ docker logs citeck_eapps_<ns>_default --tail 100 2>&1 | grep -E "DEPLOYED|FAILED
 
 ---
 
-## Статус на 2026-04-18 (текущий)
+## Статус на 2026-06-04 (текущий)
+
+Сессия фиксации фичи в git и доведения тестового покрытия.
+
+### ✅ Сделано
+
+**Git:**
+- Заведена задача **PRJCTMNG-58**; наработка разнесена по веткам `feature/PRJCTMNG-58-email-import` в `ecos-ecom` и `ecos-project-tracker` (ранее всё лежало незакоммиченным).
+- Проверка регрессий по ветке: среди существующих файлов изменены только `application.yml` (+1 ключ `mail.attachment.max-size-mb`) и `.gitignore`; всё остальное — новые файлы. `project-form.json` — строго аддитивный diff (+197/−0), валидный JSON. Полный `mvn test` ecos-ecom — 49 тестов, 0 падений (включая поднятие Spring-контекста и SD/CRM-почтовые тесты) → старая функциональность не затронута.
+
+**Тестовое покрытие (юнит, всегда выполняются):** 35 тестов, все зелёные.
+- `MailboxKeyResolverTest` — 10.
+- `ProjectEmailImportServiceTest` — 7.
+- `MailboxMessageMoverTest` — 5.
+- `ReadMailboxPTProcessorTest` — **8 (новый)**: маппинг исходов IMPORTED/DUPLICATE/NO_TARGET/FAILED, exception→FAILED, null-body→NO_TARGET, проброс полей письма в запрос, projectRef как EntityRef/String/пусто.
+- `PollProjectMailboxesProcessorTest` — **5 (новый)**: все проекты опрошены + `mailboxLastSync`, изоляция ошибок + `mailboxLastError`, пустой ящик, blank imap, нет проектов. `EcosSecrets` мокается через `mockStatic`.
+
+> Примечание: формулировка «25 passing» в статусе 2026-04-18 была неточной — фактически на тот момент в репозитории было 22 теста. Сейчас 35.
+
+**Тестовое покрытие (интеграционные, включаются отдельно):** `ProjectMailboxImportIntegrationTest` — **10 (новый)**, все зелёные.
+- Гейтинг по образцу `citeck-ai`: `@EnabledIfEnvironmentVariable(named = "EMAIL_INTEGRATION_TESTS", matches = "true")`. По умолчанию пропускаются (в общем прогоне — Skipped).
+- Запуск: `EMAIL_INTEGRATION_TESTS=true mvn test -Dtest=ProjectMailboxImportIntegrationTest`.
+- E2E через реальный pipeline: GreenMail (SMTP+IMAP in-memory) + in-mem Records (`InMemDataRecordsDao`) + **глобальный** роут `ReadMailboxPTRoute` (непрерывный consumer — устойчив на GreenMail, в отличие от pull-модели per-project). Конфиг подаётся через `EcosConfigServiceFactory.inMemConfigProvider`, секрет — через `mockStatic(EcosSecrets)`.
+- Сценарии: I1 проект-ключ→активность+move в Processed; I2 issue-ключ→активность+комментарий; I4 нет ключа→move в Errors без активности; I5 вложения (inline `lexical-file-node`); I6 вложение >10 МБ пропущено; I7 пересылка `Fwd:` (`emailFrom`=пересылающий); R-fallback `KEY-N`→`KEY`; R-mismatch (источник истины — `link-project` issue); R-multikey (issue > project); R-lowercase→Errors.
+
+### ⚠️ Ограничения in-process интеграционного теста
+- **Дедуп (A8) намеренно не покрыт in-process.** `existsByMessageId` фильтрует по `AND(_type, email-atts:emailMessageId)`: `InMemDataRecordsDao` не отдаёт `_type` через `getAtt` (хранится null), а `jakarta.mail.Transport.send` перегенерирует `Message-ID`. Воспроизвести дубль в in-mem нельзя. Дедуп покрыт юнитом `ProjectEmailImportServiceTest.U3` (мок `queryOne`) и стенд-кейсом A8.
+- **Per-project опрос** (`PollProjectMailboxesProcessor`, pull через `ConsumerTemplate.receive`) на GreenMail падает в `FolderClosedException`, поэтому in-process прогоняется через глобальный роут; общая логика import/routing/move у них одна. Оркестрация per-project покрыта юнит-тестом + стенд-смоуком.
+
+### 🔁 Остаётся (стенд-смоук, после деплоя)
+- Прогон приёмочного чек-листа на живом локальном стенде (Records API + реальная почта): per-project импорт A4–A7/A13, дедуп A8, видимость секции «Почта» по ролям A11/A12 (Playwright).
+
+---
+
+## Статус на 2026-04-18
 
 ### ✅ Закрытые в сессии 2026-04-18 итерации
 
