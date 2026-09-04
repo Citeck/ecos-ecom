@@ -12,14 +12,13 @@
     <parent>
         <groupId>ru.citeck.ecos.webapp</groupId>
         <artifactId>ecos-webapp-spring-simple-parent</artifactId>
-        <version>3.20.13</version>
+        <version>3.33.0</version>
     </parent>
 
     <properties>
 
-        <camel-core.version>4.14.0</camel-core.version><!--
+        <camel-core.version>4.14.8</camel-core.version><!--
         <ecos-camel-telegram.version>3.12.13</ecos-camel-telegram.version>-->
-        <jsoup.version>1.18.1</jsoup.version>
 
     </properties>
 
@@ -64,7 +63,6 @@
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>${jsoup.version}</version>
         </dependency>
 
         <dependency>
