@@ -96,7 +96,8 @@ public class CreateLeadProcessor implements Processor {
         String content = mail.getContent();
         log.debug("mail content: " + content);
 
-        String description = parseLead(content, LEAD_COMMENT, 1);
+        String description = MailLeadFields.subjectLine(mail.getSubject());
+        description += parseLead(content, LEAD_COMMENT, 1);
         description += "<br><b>Почтовое сообщение:</b><br>" + mail.getContent();
 
         LeadDTO leadDto = new LeadDTO();
@@ -125,10 +126,10 @@ public class CreateLeadProcessor implements Processor {
             }
         }
 
-        leadDto.setName(company);
+        String contactFio = parseLead(content, LEAD_FIO, 0);
+        leadDto.setName(MailLeadFields.leadName(company, contactFio, mail.getFrom(), mail.getFromAddress()));
 
         ContactData contact = new ContactData();
-        String contactFio = parseLead(content, LEAD_FIO, 0);
         if (StringUtils.isNotBlank(contactFio)) {
             contact.setContactFio(contactFio);
         } else {
