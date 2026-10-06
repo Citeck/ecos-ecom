@@ -13,6 +13,7 @@ import ru.citeck.ecos.ecom.processor.mail.EcomMail;
 import ru.citeck.ecos.webapp.api.constants.AppName;
 
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,10 +54,21 @@ public class ReadMailboxCRMProcessor implements Processor {
     public static final String PARTNERSHIP_REQUEST_KIND = "partnership-request";
     public static final String SPECIAL_OFFER_KIND = "special-offer";
 
-    private final Pattern dealNumber;
+    // "Re:", "Fwd:", "Ответ:", "Пересл.:", localized ones ("AW:", "WG:", "SV:", "TR:"), numbered as in "Re[2]:",
+    // and after tags added by mail servers, as in "[EXT] Re:"
+    private static final Pattern REPLY_OR_FORWARD = Pattern.compile(
+        "^\\s*(\\[[^\\]]*]\\s*)*(re|fw|fwd|aw|wg|sv|tr|ответ|отв|пересл)\\.?\\s*(\\[\\d+]|\\(\\d+\\))?\\s*:",
+        Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE
+    );
 
-    public ReadMailboxCRMProcessor(@Value("${mail.lead.pattern.dealNumber}") final String dealNumberPattern) {
+    private final Pattern dealNumber;
+    private final List<Pattern> trackingIds;
+
+    public ReadMailboxCRMProcessor(@Value("${mail.lead.pattern.dealNumber}") final String dealNumberPattern,
+                                   @Value("${mail.lead.pattern.gaClientId}") final String gaClientIdPattern,
+                                   @Value("${mail.lead.pattern.ymClientId}") final String ymClientIdPattern) {
         dealNumber = Pattern.compile(dealNumberPattern);
+        trackingIds = List.of(Pattern.compile(gaClientIdPattern), Pattern.compile(ymClientIdPattern));
     }
 
     @Override
@@ -92,7 +104,11 @@ public class ReadMailboxCRMProcessor implements Processor {
             exchange.setProperty("subject", "lead");
         }
 
-        if (mail.getLeadNumber() == null) {
+        if (mail.getLeadNumber() == null && isReplyOrForward(mail.getSubject())) {
+            // A reply or a forward quotes other emails, so it is not parsed as a site form even with a form subject
+            mail.setKind(OTHER_KIND);
+            exchange.setProperty("subject", "other");
+        } else if (mail.getLeadNumber() == null) {
             for (String dealSubject : dealSubjectsConsult) {
                 if (mail.getSubject().contains(dealSubject)) {
                     mail.setKind(CONSULT_KIND);
@@ -127,11 +143,24 @@ public class ReadMailboxCRMProcessor implements Processor {
                     mail.setKind(SPECIAL_OFFER_KIND);
                 } else {
                     mail.setKind(OTHER_KIND);
-                    exchange.setProperty("subject", "other");
+                    // Only the site adds the tracking ids, so a form whose subject is not in the config yet
+                    // is still parsed as a form
+                    exchange.setProperty("subject", hasTrackingId(mail.getContent()) ? "lead" : "other");
                 }
             }
         }
         exchange.getIn().setBody(mail);
+    }
+
+    private boolean hasTrackingId(String content) {
+        return trackingIds.stream().anyMatch(pattern -> {
+            Matcher matcher = pattern.matcher(content);
+            return matcher.find() && StringUtils.isNotBlank(matcher.group());
+        });
+    }
+
+    static boolean isReplyOrForward(String subject) {
+        return subject != null && REPLY_OR_FORWARD.matcher(subject).find();
     }
 
     public static String html2text(String html) {
