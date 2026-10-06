@@ -12,6 +12,10 @@ import ru.citeck.ecos.ecom.service.cameldsl.MailBodyExtractor;
 @Component
 public class ReadMailboxCRMRoute extends RouteBuilder {
 
+    // Site forms and other emails differ only in parsing, which CreateLeadProcessor does
+    static final String CREATE_LEAD_CONDITION =
+        "${exchangeProperty.subject} == 'lead' || ${exchangeProperty.subject} == 'other'";
+
     static final String ROUTE_ID = "readMailboxCRMRoute";
 
     @EcosConfig("mail-inbox-crm")
@@ -31,10 +35,8 @@ public class ReadMailboxCRMRoute extends RouteBuilder {
                 .setVariable(AddEmailActivityProcessor.MAIL_VARIABLE, simple("${body}"))
                 .process(readMailboxCRMProcessor)
                 .choice()
-                    .when(simple("${exchangeProperty.subject} == 'lead'"))
+                    .when(simple(CREATE_LEAD_CONDITION))
                         .to("direct:createLead")
-                    .when(simple("${exchangeProperty.subject} == 'other'"))
-                        .to("direct:createOtherLead")
                     .when(simple("${exchangeProperty.subject} == 'mail-activity'"))
                         .setBody(simple(""))
                         .to("direct:addMailActivity")

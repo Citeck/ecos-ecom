@@ -95,23 +95,29 @@ public class CreateLeadProcessor implements Processor {
         MailDTO mail = (MailDTO) exchange.getIn().getBody();
         String content = mail.getContent();
         log.debug("mail content: " + content);
+        // Only an email with a site form subject is parsed as a form. The body of any other email may quote
+        // another person or an old form (a reply, a forward, a signature), so such a lead is built from the sender
+        boolean siteForm = "lead".equals(exchange.getProperty("subject"));
+        String formContent = siteForm ? content : "";
 
-        String description = parseLead(content, LEAD_COMMENT, 1);
-        description += "<br><b>Почтовое сообщение:</b><br>" + mail.getContent();
+        // The content is plain text, so everything from the email is escaped before going into HTML
+        String description = MailLeadFields.subjectLine(mail.getSubject());
+        description += MailLeadFields.textToHtml(parseLead(formContent, LEAD_COMMENT, 1));
+        description += "<br><b>Почтовое сообщение:</b><br>" + MailLeadFields.textToHtml(content);
 
         LeadDTO leadDto = new LeadDTO();
         leadDto.setFromAddress(mail.getFromAddress());
-        leadDto.setFrom(parseLead(content, LEAD_FROM, 0));
-        leadDto.setSubject(parseLead(content, LEAD_SUBJECT, 0));
-        leadDto.setSiteFrom(parseLead(content, LEAD_SITE_FROM, 0));
-        leadDto.setNumberOfUsers(parseLead(content, LEAD_NUMBER_OF_USERS, 0));
+        leadDto.setFrom(parseLead(formContent, LEAD_FROM, 0));
+        leadDto.setSubject(parseLead(formContent, LEAD_SUBJECT, 0));
+        leadDto.setSiteFrom(parseLead(formContent, LEAD_SITE_FROM, 0));
+        leadDto.setNumberOfUsers(parseLead(formContent, LEAD_NUMBER_OF_USERS, 0));
         leadDto.setDateReceived(mail.getDate());
         leadDto.setEmessage(mail.getContent());
         leadDto.setDescription(description);
-        leadDto.setGaClientId(parseLead(content, GA_CLIENT_ID, 0));
-        leadDto.setYmClientId(parseLead(content, YM_CLIENT_ID, 0));
+        leadDto.setGaClientId(parseLead(formContent, GA_CLIENT_ID, 0));
+        leadDto.setYmClientId(parseLead(formContent, YM_CLIENT_ID, 0));
 
-        String company = parseLead(content, LEAD_COMPANY, 0);
+        String company = parseLead(formContent, LEAD_COMPANY, 0);
         EntityRef counterparty = null;
         List<ContactData> contacts = new ArrayList<>();
         if (StringUtils.isNotBlank(company)) {
@@ -125,26 +131,31 @@ public class CreateLeadProcessor implements Processor {
             }
         }
 
-        leadDto.setName(company);
+        String contactFio = parseLead(formContent, LEAD_FIO, 0);
+        String contactEmail = parseLead(formContent, LEAD_EMAIL, 0);
+        String senderName = MailLeadFields.senderName(mail.getFrom());
+
+        if (!siteForm) {
+            leadDto.setName(MailLeadFields.leadName(senderName, mail.getFromAddress()));
+        } else if (StringUtils.isNotBlank(leadDto.getCounterpartyText())) {
+            // The company is kept in full as before; the name of the matched counterparty wins over the form text
+            leadDto.setName(leadDto.getCounterpartyText().trim());
+        } else {
+            // The sender of a site form is the site robot, so a form without the person is named after its subject
+            leadDto.setName(MailLeadFields.leadName(contactFio, contactEmail, mail.getSubject(), senderName,
+                mail.getFromAddress()));
+        }
 
         ContactData contact = new ContactData();
-        String contactFio = parseLead(content, LEAD_FIO, 0);
-        if (StringUtils.isNotBlank(contactFio)) {
-            contact.setContactFio(contactFio);
+        if (siteForm) {
+            contact.setContactFio(StringUtils.defaultString(StringUtils.firstNonBlank(contactFio, leadDto.getFrom())));
         } else {
-            contact.setContactFio(leadDto.getFrom());
+            contact.setContactFio(senderName);
         }
-
-        String contactEmail = parseLead(content, LEAD_EMAIL, 0);
-        if (StringUtils.isNotBlank(contactEmail)) {
-            contact.setContactEmail(contactEmail);
-        } else {
-            contact.setContactEmail(leadDto.getFromAddress());
-        }
-
-        contact.setContactPosition(parseLead(content, LEAD_POSITION, 0));
-        contact.setContactDepartment(parseLead(content, LEAD_DEPARTMENT, 0));
-        contact.setContactPhone(parseLead(content, LEAD_PHONE, 0));
+        contact.setContactEmail(StringUtils.defaultString(StringUtils.firstNonBlank(contactEmail, mail.getFromAddress())));
+        contact.setContactPosition(parseLead(formContent, LEAD_POSITION, 0));
+        contact.setContactDepartment(parseLead(formContent, LEAD_DEPARTMENT, 0));
+        contact.setContactPhone(parseLead(formContent, LEAD_PHONE, 0));
         boolean isContactAdded = checkAndAddContact(contacts, contact);
         if (counterparty != null && isContactAdded) {
             updateCounterpartyContacts(counterparty, contacts);
@@ -162,7 +173,7 @@ public class CreateLeadProcessor implements Processor {
             leadDto.setRequestCategory(requestCategory.getAsString());
         }
 
-        leadDto.setCreatedAutomatically(exchange.getProperty("subject").equals("lead"));
+        leadDto.setCreatedAutomatically(siteForm);
 
         log.debug("lead: " + leadDto);
         exchange.getIn().setBody(leadDto.toMap());
@@ -187,11 +198,11 @@ public class CreateLeadProcessor implements Processor {
         }
 
         boolean contactExist = contacts.stream()
-            .anyMatch(c -> c.getContactFio().equals(contact.getContactFio()) &&
-                c.getContactPhone().equals(contact.getContactPhone()) &&
-                c.getContactEmail().equals(contact.getContactEmail()));
+            .anyMatch(c -> sameValue(c.getContactFio(), contact.getContactFio()) &&
+                sameValue(c.getContactPhone(), contact.getContactPhone()) &&
+                sameValue(c.getContactEmail(), contact.getContactEmail()));
         if (!contactExist) {
-            boolean hasMainContact = contacts.stream().anyMatch(ContactData::getContactMain);
+            boolean hasMainContact = contacts.stream().anyMatch(c -> Boolean.TRUE.equals(c.getContactMain()));
             if (hasMainContact) {
                 contact.setContactMain(false);
             } else {
@@ -201,6 +212,11 @@ public class CreateLeadProcessor implements Processor {
             return true;
         }
         return false;
+    }
+
+    // A field of a saved contact may be null, while a parsed field is an empty string
+    private static boolean sameValue(String saved, String parsed) {
+        return StringUtils.defaultString(saved).equals(StringUtils.defaultString(parsed));
     }
 
     private void updateCounterpartyContacts(EntityRef counterparty, List<ContactData> contacts) {
