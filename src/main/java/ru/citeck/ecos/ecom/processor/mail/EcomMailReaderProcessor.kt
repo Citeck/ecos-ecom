@@ -105,7 +105,7 @@ class EcomMailReaderProcessor : Processor {
     }
 
     private fun decodeText(value: String?): String {
-        return value?.let { MimeUtility.decodeText(value) } ?: ""
+        return value?.let { MimeUtility.decodeText(MimeUtility.unfold(it)) } ?: ""
     }
 
     private fun getEmailDomain(fromEmail: String): String {

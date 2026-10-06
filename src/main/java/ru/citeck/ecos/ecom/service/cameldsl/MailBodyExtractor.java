@@ -3,8 +3,10 @@ package ru.citeck.ecos.ecom.service.cameldsl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.Exchange;
 import org.apache.camel.Handler;
+import org.apache.camel.component.mail.MailMessage;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.TextNode;
 
 import jakarta.mail.Multipart;
 import jakarta.mail.Part;
@@ -21,7 +23,12 @@ public class MailBodyExtractor {
     @Handler
     public void extract(Exchange exchange) {
         Object mailData = exchange.getIn().getBody();
-        String mailText = parseBody(mailData);
+        String mailText;
+        if (exchange.getIn() instanceof MailMessage) {
+            mailText = removeVulnerabilities(getText(((MailMessage) exchange.getIn()).getOriginalMessage()));
+        } else {
+            mailText = parseBody(mailData);
+        }
         exchange.getIn().setHeader(MAIL_TEXT_ATT, mailText);
     }
 
@@ -58,6 +65,13 @@ public class MailBodyExtractor {
     private String getText(Part p) {
 
         try {
+            if (p.isMimeType("text/plain")) {
+                // All consumers expect HTML. Escape literal plain text before HTML sanitization and parsing.
+                Document doc = Document.createShell("");
+                doc.outputSettings().prettyPrint(false);
+                doc.body().appendChild(new TextNode((String) p.getContent()));
+                return doc.body().html();
+            }
             if (p.isMimeType("text/*")) {
                 return (String) p.getContent();
             }
