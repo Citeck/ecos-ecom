@@ -6,6 +6,8 @@
 
 Welcome to the Citeck `ecos-ecom` repository! The microservice provides a solution for creating and managing email newsletters, chat bots within the platform.
 
+The service also imports incoming email into CRM leads. The sender determines the lead name, and the email subject is included in the lead description.
+
 ## Get started
 
 If you are new to Citeck platform and would like to load the software locally, we recommend you download the Dockerized version from [Demo repository](https://github.com/Citeck/citeck-community).
