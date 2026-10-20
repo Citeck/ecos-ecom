@@ -20,6 +20,7 @@ import ru.citeck.ecos.ecom.processor.sd.SdRequestDesc
 import ru.citeck.ecos.ecom.routes.ReadMailboxSDRoute
 import ru.citeck.ecos.model.lib.ModelServiceFactory
 import ru.citeck.ecos.model.lib.type.dto.TypeInfo
+import ru.citeck.ecos.model.lib.type.repo.DefaultTypesRepo
 import ru.citeck.ecos.model.lib.type.repo.TypesRepo
 import ru.citeck.ecos.records3.RecordsService
 import ru.citeck.ecos.records3.RecordsServiceFactory
@@ -54,10 +55,7 @@ abstract class SdRequestTestBase {
 
         val modelServices = object : ModelServiceFactory() {
             override fun createTypesRepo(): TypesRepo {
-                return object : TypesRepo {
-                    override fun getChildren(typeRef: EntityRef): List<EntityRef> {
-                        return emptyList()
-                    }
+                return object : DefaultTypesRepo() {
                     override fun getTypeInfo(typeRef: EntityRef): TypeInfo? {
                         if (typeRef.getLocalId() == SdRequestDesc.TYPE.getLocalId()) {
                             return TypeInfo.create()

@@ -23,6 +23,8 @@ To run this application the following applications from Citeck deployment are ne
 
 ## Development
 
+The project uses ecos-webapp-commons parent 3.36.0 and requires JDK 25.
+
 To start your application in the dev profile, simply run:
 
 ```
